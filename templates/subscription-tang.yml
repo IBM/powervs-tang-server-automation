@@ -1,0 +1,7 @@
+- hosts: all
+
+  tasks:
+  - name: Add route to Tang server
+    command: route add -net 0.0.0.0/0 gw "{{bastion_ip}}" env2
+  - name: Add Subscription to Tang server
+    command: sudo subscription-manager register --username="{{username}}" --password="{{password}}" --force

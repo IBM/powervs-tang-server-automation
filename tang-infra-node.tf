@@ -448,6 +448,16 @@ resource "null_resource" "install" {
       "cd nbde_server && git checkout ${var.nbde_tag}",
     ]
   }
+  provisioner "file" {
+    source      = "${path.cwd}/templates/tang-playbook.yml"
+    destination = "nbde_server/tests/"
+  }
+
+
+  provisioner "file" {
+    source      = "${path.cwd}/templates/subscription.yml"
+    destination = "nbde_server/tests/"
+  }
 
   provisioner "file" {
     content     = templatefile("${path.cwd}/templates/tang_inventory", local.tang_inventory)
@@ -457,7 +467,7 @@ resource "null_resource" "install" {
   provisioner "remote-exec" {
     inline = [
       "echo 'Running tang setup playbook...'",
-      "cd nbde_server && export ANSIBLE_HOST_KEY_CHECKING=False && ansible-playbook -i inventory tests/subscription_tang.yml --extra-vars username=${var.rhel_subscription_username} --extra-vars password=${var.rhel_subscription_password} --extra-vars bastion_ip=${data.ibm_pi_instance_ip.bastion_ip[0].ip} && ansible-playbook -i inventory tests/my-tang-playbook.yml"
+      "cd nbde_server && export ANSIBLE_HOST_KEY_CHECKING=False && ansible-playbook -i inventory tests/subscription_tang.yml --extra-vars username=${var.rhel_subscription_username} --extra-vars password=${var.rhel_subscription_password} --extra-vars bastion_ip=${data.ibm_pi_instance_ip.bastion_ip[0].ip} && ansible-playbook -i inventory tests/tang-playbook.yml"
     ]
   }
 }

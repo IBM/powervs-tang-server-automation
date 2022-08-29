@@ -79,5 +79,5 @@ In case of any errors, you'll have to re-apply.
 
 Once the deployment is completed successfully, you can connect to bastion node and fetch keys for every tang server 
 ```
-$ cat /tmp/allnodes.txt
+$ cat /root/tang-keys/allnodes.txt
 ```

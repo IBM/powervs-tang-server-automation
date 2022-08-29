@@ -43,7 +43,7 @@ network_name               = "ocp-net-priv"
 rhel_username              = "root"
 public_key_file            = "data/id_rsa.pub"
 private_key_file           = "data/id_rsa"
-rhel_subscription_username = "*****"        #Leave this as-is if using CentOS as bastion image
+rhel_subscription_username = "*****"  #Leave this as-is if using CentOS as bastion image
 rhel_subscription_password = "******" #Leave this as-is if using CentOS as bastion image
 rhel_smt                   = 4
 

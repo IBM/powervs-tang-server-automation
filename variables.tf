@@ -222,8 +222,8 @@ variable "cluster_domain" {
     error_message = "The cluster_domain value must be a lower case alphanumeric characters, '-' or '.', and must start and end with an alphanumeric character."
   }
 }
-variable "nbde_repo" { default = "https://github.com/aditijadhav38/nbde_server" }
-variable "nbde_tag" { default = "ef3486b550e93caa6ad77ccb9ab250a2d8686475" }
+variable "nbde_repo" { default = "https://github.com/linux-system-roles/nbde_server" }
+variable "nbde_tag" { default = "1.1.5" }
 
 variable "name_prefix" {
   type = string

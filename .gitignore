@@ -1,1 +1,4 @@
-/data
+# Ignore everything in terraform directory
+.terraform
+# Except this file
+!.gitignore

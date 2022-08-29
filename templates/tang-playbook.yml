@@ -1,0 +1,29 @@
+---
+- hosts: all
+  gather_facts: yes
+  vars:
+    nbde_server_rotate_keys: yes
+
+  roles:
+    - linux-system-roles.nbde_server
+  tasks:
+    - name: Print tang thp
+      shell: |
+        tang-show-keys 80 >> tmp.txt
+        export ip=$(hostname -I)
+        echo " is key of this ip: `echo $ip | awk '{print $1}'` " >> tmp.txt
+    - name: Fetch source list from clients
+      fetch:
+        src: /root/tmp.txt
+        flat: yes
+        dest: "/root/tang-keys/{{ inventory_hostname }}.txt"
+    - name: Merge files
+      run_once: yes
+      delegate_to: localhost
+      shell: |
+        cat /root/tang-keys/{{ item }}.txt >> /root/tang-keys/allnodes.txt
+        shopt -s extglob
+        cd /root/tang-keys
+        rm -v !("allnodes.txt") -f
+      with_items: "{{ groups['all'] }}"
+

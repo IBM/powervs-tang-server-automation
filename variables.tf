@@ -267,5 +267,4 @@ variable "ansible_repo_name" {
 }
 
 variable "tang_health_status" {}
-#variable "tang_ips" {}
 variable "tang_count" {}

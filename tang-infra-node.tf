@@ -4,6 +4,16 @@ provider "ibm" {
   zone             = var.ibmcloud_zone
 }
 
+resource "random_id" "label" {
+    count = var.vm_id == "" ? 1 : 0
+    byte_length = "2" # Since we use the hex, the word lenght would double
+    prefix = "${var.vm_id_prefix}-"
+}
+
+locals {
+    # Generates vm_id as combination of vm_id_prefix + (random_id or user-defined vm_id)
+    name_prefix  = var.name_prefix != "" ? random_id.label[0].hex : "${var.name_prefix}"
+}
 
 locals {
   bastion_count = lookup(var.bastion, "count", 1)
@@ -40,7 +50,7 @@ data "ibm_pi_network" "network" {
 }
 
 resource "ibm_pi_network" "public_network" {
-  pi_network_name      = "${var.name_prefix}pub-net"
+  pi_network_name      = "${local.name_prefix}-pub-net"
   pi_cloud_instance_id = var.service_instance_id
   pi_network_type      = "pub-vlan"
   #  pi_dns               = var.network_dns
@@ -49,7 +59,7 @@ resource "ibm_pi_network" "public_network" {
 
 resource "ibm_pi_key" "key" {
   pi_cloud_instance_id = var.service_instance_id
-  pi_key_name          = "${var.name_prefix}keypair"
+  pi_key_name          = "${local.name_prefix}-keypair"
   pi_ssh_key           = var.public_key
 }
 
@@ -57,7 +67,7 @@ resource "ibm_pi_volume" "volume" {
   count = var.storage_type == "nfs" ? 1 : 0
 
   pi_volume_size       = var.volume_size
-  pi_volume_name       = "${var.name_prefix}${var.storage_type}-volume"
+  pi_volume_name       = "${local.name_prefix}-${var.storage_type}-volume"
   pi_volume_pool       = local.bastion_storage_pool
   pi_volume_shareable  = var.volume_shareable
   pi_cloud_instance_id = var.service_instance_id
@@ -68,7 +78,7 @@ resource "ibm_pi_instance" "bastion" {
 
   pi_memory            = var.bastion["memory"]
   pi_processors        = var.bastion["processors"]
-  pi_instance_name     = "${var.name_prefix}bastion-${count.index}"
+  pi_instance_name     = "${local.name_prefix}-bastion-${count.index}"
   pi_proc_type         = var.processor_type
   pi_image_id          = local.bastion_image_id
   pi_key_pair_name     = ibm_pi_key.key.key_id
@@ -132,8 +142,8 @@ resource "null_resource" "bastion_init" {
     inline = [<<EOF
 sudo chmod 600 .ssh/id_rsa*
 sudo sed -i.bak -e 's/^ - set_hostname/# - set_hostname/' -e 's/^ - update_hostname/# - update_hostname/' /etc/cloud/cloud.cfg
-sudo hostnamectl set-hostname --static ${lower(var.name_prefix)}bastion-${count.index}.${var.cluster_domain}
-echo 'HOSTNAME=${lower(var.name_prefix)}bastion-${count.index}.${var.cluster_domain}' | sudo tee -a /etc/sysconfig/network > /dev/null
+sudo hostnamectl set-hostname --static ${lower(local.name_prefix)}bastion-${count.index}.${var.cluster_domain}
+echo 'HOSTNAME=${lower(local.name_prefix)}bastion-${count.index}.${var.cluster_domain}' | sudo tee -a /etc/sysconfig/network > /dev/null
 sudo hostname -F /etc/hostname
 echo 'vm.max_map_count = 262144' | sudo tee --append /etc/sysctl.conf > /dev/null
 # Set SMT to user specified value; Should not fail for invalid values.
@@ -389,7 +399,7 @@ resource "ibm_pi_instance" "tang" {
 
   pi_memory            = var.bastion["memory"]
   pi_processors        = var.bastion["processors"]
-  pi_instance_name     = "${var.name_prefix}tang-${count.index}"
+  pi_instance_name     = "${local.name_prefix}-tang-${count.index}"
   pi_proc_type         = var.processor_type
   pi_image_id          = local.bastion_image_id
   pi_key_pair_name     = ibm_pi_key.key.key_id

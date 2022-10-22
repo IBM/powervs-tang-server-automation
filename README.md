@@ -1,6 +1,6 @@
 # powervs-tang-server-automation
 
-The [`powervs-tang-server-automation` project](https://github.com/IBM/powervs-tang-server-automation)) provides Terraform based automation code to help with the deployment of Tang Server on [IBM® Power Systems™ Virtual Server on IBM Cloud](https://www.ibm.com/cloud/power-virtual-server).
+The [`powervs-tang-server-automation` project](https://github.com/IBM/powervs-tang-server-automation) provides Terraform based automation code to help with the deployment of Tang Server on [IBM® Power Systems™ Virtual Server on IBM Cloud](https://www.ibm.com/cloud/power-virtual-server).
 
 This repo will be used for tang-infra-automation where we can deploy 1 bastion node with 3 tang servers.
 

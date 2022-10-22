@@ -1,4 +1,6 @@
-# Tang-infra-automation
+# powervs-tang-server-automation
+
+The `powervs-tang-server-automation` [project](https://github.com/IBM/powervs-tang-server-automation)) provides Terraform based automation code to help with the deployment of Tang Server on [IBM® Power Systems™ Virtual Server on IBM Cloud](https://www.ibm.com/cloud/power-virtual-server).
 
 This repo will be used for tang-infra-automation where we can deploy 1 bastion node with 3 tang servers.
 
@@ -10,18 +12,16 @@ This repo will be used for tang-infra-automation where we can deploy 1 bastion n
   - [Start Install](#start-install)
   - [Post Install](#post-install)
       - [Fetch Keys from Bastion Node](#fetch-keys-from-bastion-node)
-  
+      - [Destroy Tang Server](#destroy-tang-server)
 
 ## Download the Automation Code
 
 You'll need to use git to clone the deployment code when working off the master branch
 
 ```
-$ git clone https://github.com/gauravpbankar/tang-infra-automation
-$ cd tang-infra-automation
+$ git clone https://github.com/ocp-power-automation/ocp4-upi-powervs
+$ cd powervs-tang-server-automation
 ```
-
-All further instructions assumes you are in the code directory eg. `tang-infra-automation`
 
 ## Setup Terraform Variables
 
@@ -39,7 +39,8 @@ private_key_file            = "data/id_rsa"
 rhel_subscription_username  = "user@test.com"
 rhel_subscription_password  = "mypassword"
 ```
-Note: rhel image should be rhel-86
+
+Note: rhel_image_name should reference a PowerVS image for Red Hat Enterprise Linux 8.6 or 9.0.
 
 ## Start Install
 
@@ -78,6 +79,15 @@ In case of any errors, you'll have to re-apply.
 #### Fetch Keys from Bastion Node
 
 Once the deployment is completed successfully, you can connect to bastion node and fetch keys for every tang server 
+
 ```
 $ cat /root/tang-keys/allnodes.txt
+```
+
+### Destroy Tang Server
+
+Destroy the Tang Cluster
+
+```
+$ terraform apply -var-file var.tfvars
 ```

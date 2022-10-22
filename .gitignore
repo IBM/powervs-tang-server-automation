@@ -1,3 +1,6 @@
+# intellij / goland
+.idea
+
 # Local .terraform directories
 **/.terraform/*
 

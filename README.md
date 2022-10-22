@@ -95,3 +95,8 @@ Destroy the Tang Cluster
 ```
 $ terraform apply -var-file var.tfvars
 ```
+
+## Contributing
+Please see the [contributing doc](CONTRIBUTING.md) for more details.
+
+PRs are most welcome !!

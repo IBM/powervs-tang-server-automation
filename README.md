@@ -1,18 +1,20 @@
 # powervs-tang-server-automation
 
-The [`powervs-tang-server-automation` project](https://github.com/IBM/powervs-tang-server-automation) provides Terraform based automation code to help with the deployment of Tang Server on [IBM® Power Systems™ Virtual Server on IBM Cloud](https://www.ibm.com/cloud/power-virtual-server).
+The [`powervs-tang-server-automation` project](https://github.com/IBM/powervs-tang-server-automation) provides Terraform
+based automation code to help with the deployment of Tang Server
+on [IBM® Power Systems™ Virtual Server on IBM Cloud](https://www.ibm.com/cloud/power-virtual-server).
 
 The default settings deploys one bastion node with three tang servers in a cluster.
 
 # Installation Quickstart
 
 - [Installation Quickstart](#installation-quickstart)
-  - [Download the Automation Code](#download-the-automation-code)
-  - [Setup Terraform Variables](#setup-terraform-variables)
-  - [Start Install](#start-install)
-  - [Post Install](#post-install)
-      - [Fetch Keys from Bastion Node](#fetch-keys-from-bastion-node)
-      - [Destroy Tang Server](#destroy-tang-server)
+    - [Download the Automation Code](#download-the-automation-code)
+    - [Setup Terraform Variables](#setup-terraform-variables)
+    - [Start Install](#start-install)
+    - [Post Install](#post-install)
+        - [Fetch Keys from Bastion Node](#fetch-keys-from-bastion-node)
+        - [Destroy Tang Server](#destroy-tang-server)
 
 ## Download the Automation Code
 
@@ -51,11 +53,13 @@ $ terraform init
 $ terraform plan --var-file=var.tfvars
 $ terraform apply -var-file var.tfvars
 ```
+
 Note: Terraform Version should be ~>0.13.0
 
 Now wait for the installation to complete. It may take around 20 mins to complete provisioning.
 
 On successful install cluster details will be printed as shown below.
+
 ```
 bastion_ip = [
   "193.168.*.*",
@@ -67,18 +71,18 @@ tang_ip = "193.168.*.*,193.168.*.*,193.168.*.*"
 ```
 
 These details can be retrieved anytime by running the following command from the root folder of the code
+
 ```
 $ terraform output
 ```
 
-In case of any errors, you'll have to re-apply. 
+In case of any errors, you'll have to re-apply.
 
 ## Post Install
 
-
 #### Fetch Keys from Bastion Node
 
-Once the deployment is completed successfully, you can connect to bastion node and fetch keys for every tang server 
+Once the deployment is completed successfully, you can connect to bastion node and fetch keys for every tang server
 
 ```
 $ cat /root/tang-keys/allnodes.txt

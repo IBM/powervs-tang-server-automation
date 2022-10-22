@@ -5,19 +5,19 @@ provider "ibm" {
 }
 
 resource "random_id" "label" {
-    count = var.vm_id == "" ? 1 : 0
-    byte_length = "2" # Since we use the hex, the word lenght would double
-    prefix = "${var.vm_id_prefix}-"
+  count       = var.vm_id == "" ? 1 : 0
+  byte_length = "2" # Since we use the hex, the word lenght would double
+  prefix      = "${var.vm_id_prefix}-"
 }
 
 locals {
-    # Generates vm_id as combination of vm_id_prefix + (random_id or user-defined vm_id)
-    name_prefix  = var.name_prefix != "" ? random_id.label[0].hex : "${var.name_prefix}"
+  # Generates vm_id as combination of vm_id_prefix + (random_id or user-defined vm_id)
+  name_prefix = var.name_prefix != "" ? random_id.label[0].hex : "${var.name_prefix}"
 }
 
 locals {
   bastion_count = lookup(var.bastion, "count", 1)
-  proxy = {
+  proxy         = {
     server    = lookup(var.proxy, "server", ""),
     port      = lookup(var.proxy, "port", "3128"),
     user      = lookup(var.proxy, "user", ""),
@@ -54,7 +54,7 @@ resource "ibm_pi_network" "public_network" {
   pi_cloud_instance_id = var.service_instance_id
   pi_network_type      = "pub-vlan"
   #  pi_dns               = var.network_dns
-  pi_dns = var.dns_forwarders == "" ? [] : [for dns in split(";", var.dns_forwarders) : trimspace(dns)]
+  pi_dns               = var.dns_forwarders == "" ? [] : [for dns in split(";", var.dns_forwarders) : trimspace(dns)]
 }
 
 resource "ibm_pi_key" "key" {
@@ -139,7 +139,8 @@ resource "null_resource" "bastion_init" {
     destination = ".ssh/id_rsa.pub"
   }
   provisioner "remote-exec" {
-    inline = [<<EOF
+    inline = [
+      <<EOF
 sudo chmod 600 .ssh/id_rsa*
 sudo sed -i.bak -e 's/^ - set_hostname/# - set_hostname/' -e 's/^ - update_hostname/# - update_hostname/' /etc/cloud/cloud.cfg
 sudo hostnamectl set-hostname --static ${lower(local.name_prefix)}bastion-${count.index}.${var.cluster_domain}
@@ -165,10 +166,8 @@ EOF
 }
 
 
-
-
 resource "null_resource" "setup_proxy_info" {
-  count      = ! var.setup_squid_proxy && local.proxy.server != "" ? local.bastion_count : 0
+  count      = !var.setup_squid_proxy && local.proxy.server != "" ? local.bastion_count : 0
   depends_on = [null_resource.bastion_init]
 
   connection {
@@ -181,7 +180,8 @@ resource "null_resource" "setup_proxy_info" {
   }
   # Setup proxy
   provisioner "remote-exec" {
-    inline = [<<EOF
+    inline = [
+      <<EOF
 echo "Setting up proxy details..."
 # System
 set http_proxy="http://${local.proxy.user_pass}${local.proxy.server}:${local.proxy.port}"
@@ -211,7 +211,7 @@ EOF
 resource "null_resource" "bastion_register" {
   count      = (var.rhel_subscription_username == "" || var.rhel_subscription_username == "<subscription-id>") && var.rhel_subscription_org == "" ? 0 : local.bastion_count
   depends_on = [null_resource.bastion_init, null_resource.setup_proxy_info]
-  triggers = {
+  triggers   = {
     external_ip        = data.ibm_pi_instance_ip.bastion_public_ip[count.index].external_ip
     rhel_username      = var.rhel_username
     private_key        = var.private_key
@@ -229,7 +229,8 @@ resource "null_resource" "bastion_register" {
   }
 
   provisioner "remote-exec" {
-    inline = [<<EOF
+    inline = [
+      <<EOF
 # Give some more time to subscription-manager
 sudo subscription-manager config --server.server_timeout=600
 sudo subscription-manager clean
@@ -260,7 +261,7 @@ EOF
     }
     when       = destroy
     on_failure = continue
-    inline = [
+    inline     = [
       "sudo subscription-manager unregister",
       "sudo subscription-manager remove --all",
     ]
@@ -281,7 +282,8 @@ resource "null_resource" "enable_repos" {
   }
 
   provisioner "remote-exec" {
-    inline = [<<EOF
+    inline = [
+      <<EOF
 # Additional repo for installing ansible package
 if ( [[ -z "${var.rhel_subscription_username}" ]] || [[ "${var.rhel_subscription_username}" == "<subscription-id>" ]] ) && [[ -z "${var.rhel_subscription_org}" ]]; then
   sudo yum install -y epel-release
@@ -295,7 +297,10 @@ EOF
 
 resource "null_resource" "bastion_packages" {
   count      = local.bastion_count
-  depends_on = [null_resource.bastion_init, null_resource.setup_proxy_info, null_resource.bastion_register, null_resource.enable_repos]
+  depends_on = [
+    null_resource.bastion_init, null_resource.setup_proxy_info, null_resource.bastion_register,
+    null_resource.enable_repos
+  ]
 
   connection {
     type        = "ssh"
@@ -391,8 +396,6 @@ resource "null_resource" "rhel83_fix" {
 }
 
 
-
-
 resource "ibm_pi_instance" "tang" {
   count      = var.tang_count
   depends_on = [ibm_pi_instance.bastion]
@@ -416,8 +419,6 @@ resource "ibm_pi_instance" "tang" {
 }
 
 
-
-
 data "ibm_pi_instance_ip" "tang_ip" {
   count      = var.tang_count
   depends_on = [ibm_pi_instance.tang]
@@ -436,7 +437,10 @@ locals {
 }
 
 resource "null_resource" "install" {
-  depends_on = [null_resource.bastion_init, null_resource.setup_proxy_info, null_resource.bastion_register, null_resource.enable_repos, ibm_pi_instance.bastion]
+  depends_on = [
+    null_resource.bastion_init, null_resource.setup_proxy_info, null_resource.bastion_register,
+    null_resource.enable_repos, ibm_pi_instance.bastion
+  ]
 
   count = local.bastion_count
 

@@ -10,7 +10,7 @@ vm_id_prefix = "infra-tang-node"
 vm_id        = ""
 tang_count   = 3
 #cluster_id_prefix = "test-tang"
-name_prefix = "infra-node3"
+name_prefix  = "infra-node3"
 
 ### This is default minimalistic config. For PowerVS processors are equal to entitled physical count
 ### So N processors == N physical core entitlements == ceil[N] vCPUs.
@@ -35,9 +35,9 @@ private_key = <<-EOT
 EOT
 
 
-rhel_image_name = "rhel-8.6"
-processor_type  = "shared"
-system_type     = "s922"
+rhel_image_name            = "rhel-8.6"
+processor_type             = "shared"
+system_type                = "s922"
 #network_name                = "rh-operator-dev-private-network"
 network_name               = "ocp-net-priv"
 rhel_username              = "root"

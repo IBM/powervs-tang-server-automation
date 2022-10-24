@@ -268,3 +268,12 @@ variable "ansible_repo_name" {
 
 variable "tang_health_status" {}
 variable "tang_count" {}
+
+################################################################
+### Fips Configuration
+################################################################
+variable "fips_compliant" {
+  type        = bool
+  description = "Set to true to enable usage of FIPS for the deployment."
+  default     = false
+}

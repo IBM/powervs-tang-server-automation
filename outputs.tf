@@ -32,4 +32,3 @@ output "bastion_public_ip" {
 output tang_ip {
   value = "${join(",", data.ibm_pi_instance_ip.tang_ip.*.ip)}"
 }
-

@@ -37,7 +37,7 @@ locals {
 
 locals {
   bastion_count = lookup(var.bastion, "count", 1)
-  proxy         = {
+  proxy = {
     server    = lookup(var.proxy, "server", ""),
     port      = lookup(var.proxy, "port", "3128"),
     user      = lookup(var.proxy, "user", ""),
@@ -45,7 +45,6 @@ locals {
     user_pass = lookup(var.proxy, "user", "") == "" ? "" : "${lookup(var.proxy, "user", "")}:${lookup(var.proxy, "password", "")}@"
     no_proxy  = "127.0.0.1,localhost,.${var.cluster_id}.${var.cluster_domain}"
   }
-
 }
 
 data "ibm_pi_catalog_images" "catalog_images" {
@@ -54,11 +53,12 @@ data "ibm_pi_catalog_images" "catalog_images" {
 
 locals {
   catalog_bastion_image = [for x in data.ibm_pi_catalog_images.catalog_images.images : x if x.name == var.rhel_image_name]
-  bastion_image_id      = length(local.catalog_bastion_image) == 0 ? data.ibm_pi_image.bastion[0].id : local.catalog_bastion_image[0].image_id
+  rhel_image_id      = length(local.catalog_bastion_image) == 0 ? data.ibm_pi_image.bastion[0].id : local.catalog_bastion_image[0].image_id
   bastion_storage_pool  = length(local.catalog_bastion_image) == 0 ? data.ibm_pi_image.bastion[0].storage_pool : local.catalog_bastion_image[0].storage_pool
 }
 
 data "ibm_pi_image" "bastion" {
+  # TODO: Check on the following... it doesn't make sense.
   count                = length(local.catalog_bastion_image) == 0 ? 1 : 0
   pi_image_name        = var.rhel_image_name
   pi_cloud_instance_id = var.service_instance_id
@@ -73,24 +73,13 @@ resource "ibm_pi_network" "public_network" {
   pi_network_name      = "${local.name_prefix}-pub-net"
   pi_cloud_instance_id = var.service_instance_id
   pi_network_type      = "pub-vlan"
-  #  pi_dns               = var.network_dns
-  pi_dns               = var.dns_forwarders == "" ? [] : [for dns in split(";", var.dns_forwarders) : trimspace(dns)]
+  pi_dns = var.dns_forwarders == "" ? [] : [for dns in split(";", var.dns_forwarders) : trimspace(dns)]
 }
 
 resource "ibm_pi_key" "key" {
   pi_cloud_instance_id = var.service_instance_id
   pi_key_name          = "${local.name_prefix}-keypair"
   pi_ssh_key           = var.public_key
-}
-
-resource "ibm_pi_volume" "volume" {
-  count = var.storage_type == "nfs" ? 1 : 0
-
-  pi_volume_size       = var.volume_size
-  pi_volume_name       = "${local.name_prefix}-${var.storage_type}-volume"
-  pi_volume_pool       = local.bastion_storage_pool
-  pi_volume_shareable  = var.volume_shareable
-  pi_cloud_instance_id = var.service_instance_id
 }
 
 resource "ibm_pi_instance" "bastion" {
@@ -100,7 +89,7 @@ resource "ibm_pi_instance" "bastion" {
   pi_processors        = var.bastion["processors"]
   pi_instance_name     = "${local.name_prefix}-bastion-${count.index}"
   pi_proc_type         = var.processor_type
-  pi_image_id          = local.bastion_image_id
+  pi_image_id          = local.rhel_image_id
   pi_key_pair_name     = ibm_pi_key.key.key_id
   pi_sys_type          = var.system_type
   pi_cloud_instance_id = var.service_instance_id
@@ -185,7 +174,6 @@ EOF
   }
 }
 
-
 resource "null_resource" "setup_proxy_info" {
   count      = !var.setup_squid_proxy && local.proxy.server != "" ? local.bastion_count : 0
   depends_on = [null_resource.bastion_init]
@@ -225,13 +213,12 @@ echo "proxy_password=${local.proxy.password}" | sudo tee -a $yum_dnf_conf > /dev
 EOF
     ]
   }
-
 }
 
 resource "null_resource" "bastion_register" {
   count      = (var.rhel_subscription_username == "" || var.rhel_subscription_username == "<subscription-id>") && var.rhel_subscription_org == "" ? 0 : local.bastion_count
   depends_on = [null_resource.bastion_init, null_resource.setup_proxy_info]
-  triggers   = {
+  triggers = {
     external_ip        = data.ibm_pi_instance_ip.bastion_public_ip[count.index].external_ip
     rhel_username      = var.rhel_username
     private_key        = var.private_key
@@ -281,7 +268,7 @@ EOF
     }
     when       = destroy
     on_failure = continue
-    inline     = [
+    inline = [
       "sudo subscription-manager unregister",
       "sudo subscription-manager remove --all",
     ]
@@ -316,7 +303,7 @@ EOF
 }
 
 resource "null_resource" "bastion_packages" {
-  count      = local.bastion_count
+  count = local.bastion_count
   depends_on = [
     null_resource.bastion_init, null_resource.setup_proxy_info, null_resource.bastion_register,
     null_resource.enable_repos
@@ -357,48 +344,10 @@ resource "null_resource" "bastion_packages" {
   }
 }
 
-locals {
-  disk_config = {
-    volume_size = var.volume_size
-    disk_name   = "disk/pv-storage-disk"
-  }
-  storage_path = "/export"
-}
-
-resource "null_resource" "setup_nfs_disk" {
-  count      = var.storage_type == "nfs" ? 1 : 0
-  depends_on = [null_resource.bastion_packages]
-
-  connection {
-    type        = "ssh"
-    user        = var.rhel_username
-    host        = data.ibm_pi_instance_ip.bastion_public_ip[count.index].external_ip
-    private_key = var.private_key
-    agent       = var.ssh_agent
-    timeout     = "${var.connection_timeout}m"
-  }
-  provisioner "file" {
-    content     = templatefile("${path.cwd}/templates/create_disk_link.sh", local.disk_config)
-    destination = "/tmp/create_disk_link.sh"
-  }
-  provisioner "remote-exec" {
-    inline = [
-      "sudo rm -rf mkdir ${local.storage_path}; sudo mkdir -p ${local.storage_path}; sudo chmod -R 777 ${local.storage_path}",
-      "sudo chmod +x /tmp/create_disk_link.sh",
-      # Fix for copying file from Windows OS having CR
-      "sudo sed -i 's/\r//g' /tmp/create_disk_link.sh",
-      "sudo /tmp/create_disk_link.sh",
-      "sudo mkfs.xfs /dev/${local.disk_config.disk_name}",
-      "echo '/dev/${local.disk_config.disk_name} ${local.storage_path} xfs defaults 0 0' | sudo tee -a /etc/fstab > /dev/null",
-      "sudo mount ${local.storage_path}",
-    ]
-  }
-}
-
 # Workaround for unable to access RHEL 8.3 instance after reboot. TODO: Remove when permanently fixed.
 resource "null_resource" "rhel83_fix" {
   count      = local.bastion_count
-  depends_on = [null_resource.bastion_packages, null_resource.setup_nfs_disk]
+  depends_on = [null_resource.bastion_packages]
 
   connection {
     type        = "ssh"
@@ -415,29 +364,26 @@ resource "null_resource" "rhel83_fix" {
   }
 }
 
-
+# Creates the Tang Servers
 resource "ibm_pi_instance" "tang" {
   count      = var.tang_count
   depends_on = [ibm_pi_instance.bastion]
 
-  pi_memory            = var.bastion["memory"]
-  pi_processors        = var.bastion["processors"]
+  pi_memory            = var.tang["memory"]
+  pi_processors        = var.tang["processors"]
   pi_instance_name     = "${local.name_prefix}-tang-${count.index}"
   pi_proc_type         = var.processor_type
-  pi_image_id          = local.bastion_image_id
+  pi_image_id          = local.rhel_image_id
   pi_key_pair_name     = ibm_pi_key.key.key_id
   pi_sys_type          = var.system_type
   pi_cloud_instance_id = var.service_instance_id
   pi_health_status     = var.tang_health_status
-  pi_volume_ids        = var.storage_type == "nfs" ? ibm_pi_volume.volume.*.volume_id : null
   pi_storage_pool      = local.bastion_storage_pool
-
 
   pi_network {
     network_id = data.ibm_pi_network.network.id
   }
 }
-
 
 data "ibm_pi_instance_ip" "tang_ip" {
   count      = var.tang_count
@@ -505,3 +451,107 @@ resource "null_resource" "install" {
     ]
   }
 }
+
+# TODO: Do we need to add FIPS support for the bastion? and the bastion?
+
+# TODO: Workaround for unable to access RHEL 8.3 instance after reboot. TODO: Remove when permanently fixed.
+# resource "null_resource" "rhel83_fix" {
+
+
+# # enable FIPS as required
+# if [[ ${var.fips_compliant} = true ]]; then
+#sudo fips-mode-setup --enable
+#fi
+
+
+########################################################################################################################
+# For the tang instances, the final steps are:
+# 1. Remove cloud-init and enable fips on the tang servers
+# 2. Reboot the tang instances to enable fips
+
+resource "null_resource" "finalize_tang" {
+  count      = var.fips_compliant ? 1 : 0
+  depends_on = [null_resource.bastion_packages]
+
+  provisioner "file" {
+    source      = "${path.cwd}/templates/enable-fips.yml"
+    destination = "fips/tasks/"
+  }
+
+  provisioner "file" {
+    content     = templatefile("${path.cwd}/templates/tang_inventory", local.tang_inventory)
+    destination = "fips/inventory"
+  }
+
+  connection {
+    type        = "ssh"
+    user        = var.rhel_username
+    host        = data.ibm_pi_instance_ip.bastion_public_ip[count.index].external_ip
+    private_key = local.private_key
+    agent       = var.ssh_agent
+    timeout     = "${var.connection_timeout}m"
+  }
+  provisioner "remote-exec" {
+    inline = [
+      <<EOF
+echo 'Running tang setup playbook...'
+ANSIBLE_HOST_KEY_CHECKING=False && ansible-playbook -i inventory enable-fips.yml
+  }
+}
+
+# Reboot the instance
+resource "ibm_pi_instance_action" "fips_tang_reboot" {
+  depends_on = [
+    null_resource.finalize_tang
+  ]
+  count = var.fips_compliant ? var.tang.count : 0
+  pi_cloud_instance_id  = var.service_instance_id
+
+  # Example: 99999-AA-5554-333-0e1248fa30c6/10111-b114-4d11-b2224-59999ab
+  pi_instance_id        = split("/", ibm_pi_instance.tang_inst[count.index].id)[1]
+  pi_action             = "soft-reboot"
+}
+
+########################################################################################################################
+# For the Bastion instances, the final steps are:
+# 1. Remove cloud-init and enable fips
+# 2. Reboot the bastion instances to enable fips
+
+resource "null_resource" "finalize_bastion" {
+  count      = var.fips_compliant ? var.bastion.count : 0
+  depends_on = [null_resource.bastion_packages]
+
+  connection {
+    type        = "ssh"
+    user        = var.rhel_username
+    host        = data.ibm_pi_instance_ip.bastion_public_ip[count.index].external_ip
+    private_key = local.private_key
+    agent       = var.ssh_agent
+    timeout     = "${var.connection_timeout}m"
+  }
+  provisioner "remote-exec" {
+    inline = [
+      <<EOF
+# enable FIPS as required
+if [[ ${var.fips_compliant} = true ]]; then
+  sudo fips-mode-setup --enable
+fi
+sudo yum remove cloud-init --noautoremove -y
+EOF
+    ]
+  }
+}
+
+# Reboot the instance
+resource "ibm_pi_instance_action" "fips_bastion_reboot" {
+  depends_on = [
+    null_resource.finalize_bastion
+  ]
+  count = var.fips_compliant ? var.bastion.count : 0
+  pi_cloud_instance_id  = var.service_instance_id
+
+  # Example: 99999-AA-5554-333-0e1248fa30c6/10111-b114-4d11-b2224-59999ab
+  pi_instance_id        = split("/", ibm_pi_instance.bastion_inst[count.index].id)[1]
+  pi_action             = "soft-reboot"
+}
+########################################################################################################################

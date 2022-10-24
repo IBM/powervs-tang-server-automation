@@ -26,4 +26,3 @@
         cd /root/tang-keys
         rm -v !("allnodes.txt") -f
       with_items: "{{ groups['all'] }}"
-

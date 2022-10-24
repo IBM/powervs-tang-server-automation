@@ -1,10 +1,10 @@
 # powervs-tang-server-automation
 
 The [`powervs-tang-server-automation` project](https://github.com/IBM/powervs-tang-server-automation) provides Terraform
-based automation code to help with the deployment of Tang Server
-on [IBM® Power Systems™ Virtual Server on IBM Cloud](https://www.ibm.com/cloud/power-virtual-server).
+based automation code to help with the deployment of [Network Bound Disk Encryption (NBDE)](https://github.com/linux-system-roles/nbde_server)
+on [IBM® Power Systems™ Virtual Server on IBM Cloud](https://www.ibm.com/cloud/power-virtual-server). 
 
-The default settings deploys one bastion node with three tang servers in a cluster.
+The NBDE Server, also called the tang server, is deployed in a 3-node cluster with a single bastion node.
 
 # Installation Quickstart
 

@@ -559,7 +559,7 @@ EOF
   }
 }
 
-# Reboot the instance
+# Reboot the bastion instance
 resource "ibm_pi_instance_action" "fips_bastion_reboot" {
   depends_on = [
     null_resource.fips_enable

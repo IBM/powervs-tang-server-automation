@@ -452,26 +452,27 @@ resource "null_resource" "install" {
   }
 }
 
-# TODO: Do we need to add FIPS support for the bastion? and the bastion?
 
-# TODO: Workaround for unable to access RHEL 8.3 instance after reboot. TODO: Remove when permanently fixed.
-# resource "null_resource" "rhel83_fix" {
-
-
-# # enable FIPS as required
-# if [[ ${var.fips_compliant} = true ]]; then
-#sudo fips-mode-setup --enable
-#fi
 
 
 ########################################################################################################################
 # For the tang instances, the final steps are:
-# 1. Remove cloud-init and enable fips on the tang servers
-# 2. Reboot the tang instances to enable fips
+# 1. Remove cloud-init
+# 2. Enable fips on the tang servers
+# 3. Reboot the tang instances to enable fips
 
 resource "null_resource" "finalize_tang" {
   count      = var.fips_compliant ? 1 : 0
   depends_on = [null_resource.bastion_packages]
+
+  connection {
+    type        = "ssh"
+    user        = var.rhel_username
+    host        = data.ibm_pi_instance_ip.bastion_public_ip[count.index].external_ip
+    private_key = local.private_key
+    agent       = var.ssh_agent
+    timeout     = "${var.connection_timeout}m"
+  }
 
   provisioner "file" {
     source      = "${path.cwd}/templates/enable-fips.yml"
@@ -483,19 +484,13 @@ resource "null_resource" "finalize_tang" {
     destination = "fips/inventory"
   }
 
-  connection {
-    type        = "ssh"
-    user        = var.rhel_username
-    host        = data.ibm_pi_instance_ip.bastion_public_ip[count.index].external_ip
-    private_key = local.private_key
-    agent       = var.ssh_agent
-    timeout     = "${var.connection_timeout}m"
-  }
   provisioner "remote-exec" {
     inline = [
       <<EOF
 echo 'Running tang setup playbook...'
 ANSIBLE_HOST_KEY_CHECKING=False && ansible-playbook -i inventory enable-fips.yml
+EOF
+      ]
   }
 }
 
@@ -514,12 +509,34 @@ resource "ibm_pi_instance_action" "fips_tang_reboot" {
 
 ########################################################################################################################
 # For the Bastion instances, the final steps are:
-# 1. Remove cloud-init and enable fips
-# 2. Reboot the bastion instances to enable fips
+# 1. Remove cloud-init
+# 2. Enable fips
+# 3. Reboot the bastion instances to enable fips
 
-resource "null_resource" "finalize_bastion" {
-  count      = var.fips_compliant ? var.bastion.count : 0
+resource "null_resource" "bastion_remove_cloud_init" {
+  count      = var.bastion.count
   depends_on = [null_resource.bastion_packages]
+
+  connection {
+    type        = "ssh"
+    user        = var.rhel_username
+    host        = data.ibm_pi_instance_ip.bastion_public_ip[count.index].external_ip
+    private_key = local.private_key
+    agent       = var.ssh_agent
+    timeout     = "${var.connection_timeout}m"
+  }
+  provisioner "remote-exec" {
+    inline = [
+      <<EOF
+sudo yum remove cloud-init --noautoremove -y
+EOF
+    ]
+  }
+}
+
+resource "null_resource" "fips_enable" {
+  count      = var.fips_compliant ? var.bastion.count : 0
+  depends_on = [null_resource.bastion_remove_cloud_init]
 
   connection {
     type        = "ssh"
@@ -545,7 +562,7 @@ EOF
 # Reboot the instance
 resource "ibm_pi_instance_action" "fips_bastion_reboot" {
   depends_on = [
-    null_resource.finalize_bastion
+    null_resource.fips_enable
   ]
   count = var.fips_compliant ? var.bastion.count : 0
   pi_cloud_instance_id  = var.service_instance_id

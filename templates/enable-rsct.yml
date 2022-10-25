@@ -1,0 +1,8 @@
+---
+- hosts: all
+  gather_facts: yes
+
+  tasks:
+    - name: Enable Reliable Scalable Cluster Technology (RSCT)
+      shell: |
+        sudo yum install -y rsct.basic.ppc64le rsct.core.ppc64le rsct.core.utils.ppc64le rsct.opt.storagerm.ppc64le

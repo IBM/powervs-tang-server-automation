@@ -452,12 +452,9 @@ resource "null_resource" "install" {
   }
 }
 
-
-
-
 ########################################################################################################################
 # For the tang instances, the final steps are:
-# 1. Remove cloud-init
+# 1. Remove cloud-init and sets up rsct
 # 2. Enable fips on the tang servers
 # 3. Reboot the tang instances to enable fips
 
@@ -480,15 +477,28 @@ resource "null_resource" "finalize_tang" {
   }
 
   provisioner "file" {
+    source      = "${path.cwd}/templates/enable-rsct.yml"
+    destination = "rsct/tasks/"
+  }
+
+  provisioner "file" {
     content     = templatefile("${path.cwd}/templates/tang_inventory", local.tang_inventory)
     destination = "fips/inventory"
+  }
+
+  provisioner "file" {
+    content     = templatefile("${path.cwd}/templates/tang_inventory", local.tang_inventory)
+    destination = "rsct/inventory"
   }
 
   provisioner "remote-exec" {
     inline = [
       <<EOF
-echo 'Running tang setup playbook...'
-ANSIBLE_HOST_KEY_CHECKING=False && ansible-playbook -i inventory enable-fips.yml
+echo 'Running tang setup playbook... - fips'
+ANSIBLE_HOST_KEY_CHECKING=False && ansible-playbook -i fips/inventory enable-fips.yml
+
+echo 'Running tang setup playbook... rsct'
+ANSIBLE_HOST_KEY_CHECKING=False && ansible-playbook -i rsct/inventory enable-rsct.yml
 EOF
     ]
   }
@@ -509,7 +519,7 @@ resource "ibm_pi_instance_action" "fips_tang_reboot" {
 
 ########################################################################################################################
 # For the Bastion instances, the final steps are:
-# 1. Remove cloud-init
+# 1. Remove cloud-init and sets up rsct
 # 2. Enable fips
 # 3. Reboot the bastion instances to enable fips
 
@@ -529,6 +539,9 @@ resource "null_resource" "bastion_remove_cloud_init" {
     inline = [
       <<EOF
 sudo yum remove cloud-init --noautoremove -y
+
+# Adds the RSCT rpms
+sudo yum install -y rsct.basic.ppc64le rsct.core.ppc64le rsct.core.utils.ppc64le rsct.opt.storagerm.ppc64le
 EOF
     ]
   }

@@ -6,3 +6,6 @@
     - name: Enable Fips Mode
       shell: |
         sudo fips-mode-setup --enable
+    - name: Remove Cloud Init
+      shell: |
+        sudo yum remove cloud-init --noautoremove -y

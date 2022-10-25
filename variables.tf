@@ -53,15 +53,32 @@ variable "bastion" {
     processors = "1"
   }
   validation {
-    condition     = lookup(var.bastion, "count", 1) >= 1 && lookup(var.bastion, "count", 1) <= 2
+    condition     = lookup(var.bastion, "count", 1) == 1
     error_message = "The bastion.count value must be either 1 or 2."
   }
 }
 
+variable "bastion_ip" {
+  description = ""
+  default     = ""
+}
+
+variable "tang" {
+  # only three nodes are supported
+  default = {
+    count      = 3
+    memory     = "16"
+    processors = "1"
+  }
+  validation {
+    condition     = lookup(var.tang, "count", 3) == 3
+    error_message = "The tang.count value must be 3."
+  }
+}
 
 variable "rhel_image_name" {
   description = "Name of the RHEL image that you want to use for the bastion node"
-  default     = "rhel-8.2"
+  default     = "rhel-8.6"
 }
 
 variable "processor_type" {
@@ -138,10 +155,6 @@ variable "bastion_health_status" {
   }
 }
 
-variable "pull_secret_file" {
-  default = "data/pull-secret.txt"
-}
-
 variable "dns_forwarders" {
   default = "8.8.8.8; 8.8.4.4"
 }
@@ -162,25 +175,6 @@ variable "vm_id_prefix" {
 # Length cannot exceed 14 characters when combined with cluster_id_prefix
 variable "vm_id" {
   default = ""
-}
-
-variable "storage_type" {
-  #Supported values: nfs (other value won't setup a storageclass)
-  type    = string
-  default = ""
-}
-
-variable "volume_size" {
-  # If storage_type = nfs, a new volume of this size will be attached to the bastion node.
-  # Value in GB
-  type    = string
-  default = ""
-}
-
-variable "volume_shareable" {
-  type        = bool
-  description = "If the volumes can be shared or not (true/false)"
-  default     = false
 }
 
 variable "proxy" {
@@ -212,7 +206,7 @@ variable "cluster_id" {
 }
 
 
-variable "cluster_domain" {
+variable "domain" {
   type        = string
   default     = "ibm.com"
   description = "Domain name to use to setup the cluster. A DNS Forward Zone should be a registered in IBM Cloud if use_ibm_cloud_services = true"
@@ -222,8 +216,7 @@ variable "cluster_domain" {
     error_message = "The cluster_domain value must be a lower case alphanumeric characters, '-' or '.', and must start and end with an alphanumeric character."
   }
 }
-variable "nbde_repo" { default = "https://github.com/linux-system-roles/nbde_server" }
-variable "nbde_tag" { default = "1.1.5" }
+
 
 variable "name_prefix" {
   type = string
@@ -268,6 +261,13 @@ variable "ansible_repo_name" {
 
 variable "tang_health_status" {}
 variable "tang_count" {}
+
+################################################################
+### NBDE Server configuration
+################################################################
+
+variable "nbde_repo" { default = "https://github.com/linux-system-roles/nbde_server" }
+variable "nbde_tag" { default = "1.1.5" }
 
 ################################################################
 ### Fips Configuration

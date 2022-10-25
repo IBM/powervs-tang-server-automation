@@ -13,4 +13,6 @@ The project tests in layers - linting (valdity testing) and manual End-to-end te
 3. Deploy with an existing bastion
 4. Deploy without an existing bastion
 
+These are tested with RHEL8.6, RHEL9.0, Centos 8 Stream.
+
 Backup and Restore are beyond the purpose of this automation, and customers are expected to test/run these Non-Functional aspects outside of the apply and destroy.

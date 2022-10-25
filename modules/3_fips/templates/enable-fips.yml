@@ -1,0 +1,8 @@
+---
+- hosts: all
+  gather_facts: yes
+
+  tasks:
+    - name: Enable Fips Mode
+      shell: |
+        sudo fips-mode-setup --enable

@@ -24,29 +24,6 @@ provider "ibm" {
   zone             = var.ibmcloud_zone
 }
 
-resource "random_id" "label" {
-  count       = var.vm_id == "" ? 1 : 0
-  byte_length = "2" # Since we use the hex, the word lenght would double
-  prefix      = "${var.vm_id_prefix}-"
-}
-
-locals {
-  # Generates vm_id as combination of vm_id_prefix + (random_id or user-defined vm_id)
-  name_prefix = var.name_prefix != "" ? random_id.label[0].hex : "${var.name_prefix}"
-}
-
-locals {
-  bastion_count = lookup(var.bastion, "count", 1)
-  proxy = {
-    server    = lookup(var.proxy, "server", ""),
-    port      = lookup(var.proxy, "port", "3128"),
-    user      = lookup(var.proxy, "user", ""),
-    password  = lookup(var.proxy, "password", "")
-    user_pass = lookup(var.proxy, "user", "") == "" ? "" : "${lookup(var.proxy, "user", "")}:${lookup(var.proxy, "password", "")}@"
-    no_proxy  = "127.0.0.1,localhost,.${var.cluster_id}.${var.cluster_domain}"
-  }
-}
-
 data "ibm_pi_catalog_images" "catalog_images" {
   pi_cloud_instance_id = var.service_instance_id
 }
@@ -58,7 +35,6 @@ locals {
 }
 
 data "ibm_pi_image" "bastion" {
-  # TODO: Check on the following... it doesn't make sense.
   count                = length(local.catalog_bastion_image) == 0 ? 1 : 0
   pi_image_name        = var.rhel_image_name
   pi_cloud_instance_id = var.service_instance_id
@@ -70,7 +46,7 @@ data "ibm_pi_network" "network" {
 }
 
 resource "ibm_pi_network" "public_network" {
-  pi_network_name      = "${local.name_prefix}-pub-net"
+  pi_network_name      = "${var.name_prefix}-pub-net"
   pi_cloud_instance_id = var.service_instance_id
   pi_network_type      = "pub-vlan"
   pi_dns               = var.dns_forwarders == "" ? [] : [for dns in split(";", var.dns_forwarders) : trimspace(dns)]
@@ -78,23 +54,23 @@ resource "ibm_pi_network" "public_network" {
 
 resource "ibm_pi_key" "key" {
   pi_cloud_instance_id = var.service_instance_id
-  pi_key_name          = "${local.name_prefix}-keypair"
+  pi_key_name          = "${var.name_prefix}-keypair"
   pi_ssh_key           = var.public_key
 }
 
 resource "ibm_pi_instance" "bastion" {
-  count = local.bastion_count
+  count = var.bastion.count
 
   pi_memory            = var.bastion["memory"]
   pi_processors        = var.bastion["processors"]
-  pi_instance_name     = "${local.name_prefix}-bastion-${count.index}"
+  pi_instance_name     = "${var.name_prefix}-bastion-${count.index}"
   pi_proc_type         = var.processor_type
   pi_image_id          = local.rhel_image_id
   pi_key_pair_name     = ibm_pi_key.key.key_id
   pi_sys_type          = var.system_type
   pi_cloud_instance_id = var.service_instance_id
   pi_health_status     = var.bastion_health_status
-  pi_volume_ids        = var.storage_type == "nfs" ? ibm_pi_volume.volume.*.volume_id : null
+
   pi_storage_pool      = local.bastion_storage_pool
 
   pi_network {
@@ -106,16 +82,16 @@ resource "ibm_pi_instance" "bastion" {
 }
 
 data "ibm_pi_instance_ip" "bastion_ip" {
-  count      = local.bastion_count
+  count      = var.bastion.count
   depends_on = [ibm_pi_instance.bastion]
 
   pi_instance_name     = ibm_pi_instance.bastion[count.index].pi_instance_name
-  pi_network_name      = data.ibm_pi_network.network.name
+  pi_network_name      = data.ibm_pi_network.network.pi_network_name
   pi_cloud_instance_id = var.service_instance_id
 }
 
 data "ibm_pi_instance_ip" "bastion_public_ip" {
-  count      = local.bastion_count
+  count      = var.bastion.count
   depends_on = [ibm_pi_instance.bastion]
 
   pi_instance_name     = ibm_pi_instance.bastion[count.index].pi_instance_name
@@ -124,7 +100,7 @@ data "ibm_pi_instance_ip" "bastion_public_ip" {
 }
 
 resource "null_resource" "bastion_init" {
-  count = local.bastion_count
+  count = var.bastion.count
 
   connection {
     type        = "ssh"
@@ -152,8 +128,8 @@ resource "null_resource" "bastion_init" {
       <<EOF
 sudo chmod 600 .ssh/id_rsa*
 sudo sed -i.bak -e 's/^ - set_hostname/# - set_hostname/' -e 's/^ - update_hostname/# - update_hostname/' /etc/cloud/cloud.cfg
-sudo hostnamectl set-hostname --static ${lower(local.name_prefix)}bastion-${count.index}.${var.cluster_domain}
-echo 'HOSTNAME=${lower(local.name_prefix)}bastion-${count.index}.${var.cluster_domain}' | sudo tee -a /etc/sysconfig/network > /dev/null
+sudo hostnamectl set-hostname --static ${lower(var.name_prefix)}bastion-${count.index}.${var.domain}
+echo 'HOSTNAME=${lower(var.name_prefix)}bastion-${count.index}.${var.domain}' | sudo tee -a /etc/sysconfig/network > /dev/null
 sudo hostname -F /etc/hostname
 echo 'vm.max_map_count = 262144' | sudo tee --append /etc/sysctl.conf > /dev/null
 # Set SMT to user specified value; Should not fail for invalid values.
@@ -175,7 +151,7 @@ EOF
 }
 
 resource "null_resource" "setup_proxy_info" {
-  count      = !var.setup_squid_proxy && local.proxy.server != "" ? local.bastion_count : 0
+  count      = !var.setup_squid_proxy && var.proxy.server != "" ? var.bastion.count : 0
   depends_on = [null_resource.bastion_init]
 
   connection {
@@ -192,31 +168,31 @@ resource "null_resource" "setup_proxy_info" {
       <<EOF
 echo "Setting up proxy details..."
 # System
-set http_proxy="http://${local.proxy.user_pass}${local.proxy.server}:${local.proxy.port}"
-set https_proxy="http://${local.proxy.user_pass}${local.proxy.server}:${local.proxy.port}"
-set no_proxy="${local.proxy.no_proxy}"
-echo "export http_proxy=\"http://${local.proxy.user_pass}${local.proxy.server}:${local.proxy.port}\"" | sudo tee /etc/profile.d/http_proxy.sh > /dev/null
-echo "export https_proxy=\"http://${local.proxy.user_pass}${local.proxy.server}:${local.proxy.port}\"" | sudo tee -a /etc/profile.d/http_proxy.sh > /dev/null
-echo "export no_proxy=\"${local.proxy.no_proxy}\"" | sudo tee -a /etc/profile.d/http_proxy.sh > /dev/null
+set http_proxy="http://${var.proxy.user_pass}${var.proxy.server}:${var.proxy.port}"
+set https_proxy="http://${var.proxy.user_pass}${var.proxy.server}:${var.proxy.port}"
+set no_proxy="${var.proxy.no_proxy}"
+echo "export http_proxy=\"http://${var.proxy.user_pass}${var.proxy.server}:${var.proxy.port}\"" | sudo tee /etc/profile.d/http_proxy.sh > /dev/null
+echo "export https_proxy=\"http://${var.proxy.user_pass}${var.proxy.server}:${var.proxy.port}\"" | sudo tee -a /etc/profile.d/http_proxy.sh > /dev/null
+echo "export no_proxy=\"${var.proxy.no_proxy}\"" | sudo tee -a /etc/profile.d/http_proxy.sh > /dev/null
 # RHSM
-sudo sed -i -e 's/^proxy_hostname =.*/proxy_hostname = ${local.proxy.server}/' /etc/rhsm/rhsm.conf
-sudo sed -i -e 's/^proxy_port =.*/proxy_port = ${local.proxy.port}/' /etc/rhsm/rhsm.conf
-sudo sed -i -e 's/^proxy_user =.*/proxy_user = ${local.proxy.user}/' /etc/rhsm/rhsm.conf
-sudo sed -i -e 's/^proxy_password =.*/proxy_password = ${local.proxy.password}/' /etc/rhsm/rhsm.conf
+sudo sed -i -e 's/^proxy_hostname =.*/proxy_hostname = ${var.proxy.server}/' /etc/rhsm/rhsm.conf
+sudo sed -i -e 's/^proxy_port =.*/proxy_port = ${var.proxy.port}/' /etc/rhsm/rhsm.conf
+sudo sed -i -e 's/^proxy_user =.*/proxy_user = ${var.proxy.user}/' /etc/rhsm/rhsm.conf
+sudo sed -i -e 's/^proxy_password =.*/proxy_password = ${var.proxy.user_pass}/' /etc/rhsm/rhsm.conf
 # YUM/DNF
 # Incase /etc/yum.conf is a symlink to /etc/dnf/dnf.conf we try to update the original file
 yum_dnf_conf=$(readlink -f -q /etc/yum.conf)
 sudo sed -i -e '/^proxy.*/d' $yum_dnf_conf
-echo "proxy=http://${local.proxy.server}:${local.proxy.port}" | sudo tee -a $yum_dnf_conf > /dev/null
-echo "proxy_username=${local.proxy.user}" | sudo tee -a $yum_dnf_conf > /dev/null
-echo "proxy_password=${local.proxy.password}" | sudo tee -a $yum_dnf_conf > /dev/null
+echo "proxy=http://${var.proxy.server}:${var.proxy.port}" | sudo tee -a $yum_dnf_conf > /dev/null
+echo "proxy_username=${var.proxy.user}" | sudo tee -a $yum_dnf_conf > /dev/null
+echo "proxy_password=${var.proxy.user_pass}" | sudo tee -a $yum_dnf_conf > /dev/null
 EOF
     ]
   }
 }
 
 resource "null_resource" "bastion_register" {
-  count      = (var.rhel_subscription_username == "" || var.rhel_subscription_username == "<subscription-id>") && var.rhel_subscription_org == "" ? 0 : local.bastion_count
+  count      = (var.rhel_subscription_username == "" || var.rhel_subscription_username == "<subscription-id>") && var.rhel_subscription_org == "" ? 0 : var.bastion.count
   depends_on = [null_resource.bastion_init, null_resource.setup_proxy_info]
   triggers = {
     external_ip        = data.ibm_pi_instance_ip.bastion_public_ip[count.index].external_ip
@@ -276,7 +252,7 @@ EOF
 }
 
 resource "null_resource" "enable_repos" {
-  count      = local.bastion_count
+  count      = var.bastion.count
   depends_on = [null_resource.bastion_init, null_resource.setup_proxy_info, null_resource.bastion_register]
 
   connection {
@@ -303,7 +279,7 @@ EOF
 }
 
 resource "null_resource" "bastion_packages" {
-  count = local.bastion_count
+  count = var.bastion.count
   depends_on = [
     null_resource.bastion_init, null_resource.setup_proxy_info, null_resource.bastion_register,
     null_resource.enable_repos
@@ -344,186 +320,8 @@ resource "null_resource" "bastion_packages" {
   }
 }
 
-# Workaround for unable to access RHEL 8.3 instance after reboot. TODO: Remove when permanently fixed.
-resource "null_resource" "rhel83_fix" {
-  count      = local.bastion_count
-  depends_on = [null_resource.bastion_packages]
-
-  connection {
-    type        = "ssh"
-    user        = var.rhel_username
-    host        = data.ibm_pi_instance_ip.bastion_public_ip[count.index].external_ip
-    private_key = var.private_key
-    agent       = var.ssh_agent
-    timeout     = "${var.connection_timeout}m"
-  }
-  provisioner "remote-exec" {
-    inline = [
-      "sudo yum remove cloud-init --noautoremove -y",
-    ]
-  }
-}
-
-# Creates the Tang Servers
-resource "ibm_pi_instance" "tang" {
-  count      = var.tang_count
-  depends_on = [ibm_pi_instance.bastion]
-
-  pi_memory            = var.tang["memory"]
-  pi_processors        = var.tang["processors"]
-  pi_instance_name     = "${local.name_prefix}-tang-${count.index}"
-  pi_proc_type         = var.processor_type
-  pi_image_id          = local.rhel_image_id
-  pi_key_pair_name     = ibm_pi_key.key.key_id
-  pi_sys_type          = var.system_type
-  pi_cloud_instance_id = var.service_instance_id
-  pi_health_status     = var.tang_health_status
-  pi_storage_pool      = local.bastion_storage_pool
-
-  pi_network {
-    network_id = data.ibm_pi_network.network.id
-  }
-}
-
-data "ibm_pi_instance_ip" "tang_ip" {
-  count      = var.tang_count
-  depends_on = [ibm_pi_instance.tang]
-
-  pi_instance_name     = ibm_pi_instance.tang[count.index].pi_instance_name
-  pi_network_name      = data.ibm_pi_network.network.name
-  pi_cloud_instance_id = var.service_instance_id
-}
-
-locals {
-
-  tang_inventory = {
-    rhel_username = var.rhel_username
-    tang_hosts    = data.ibm_pi_instance_ip.tang_ip.*.ip
-  }
-}
-
-resource "null_resource" "install" {
-  depends_on = [
-    null_resource.bastion_init, null_resource.setup_proxy_info, null_resource.bastion_register,
-    null_resource.enable_repos, ibm_pi_instance.bastion
-  ]
-
-  count = local.bastion_count
-
-  connection {
-    type        = "ssh"
-    user        = var.rhel_username
-    host        = data.ibm_pi_instance_ip.bastion_public_ip[count.index].external_ip
-    private_key = var.private_key
-    agent       = var.ssh_agent
-    timeout     = "${var.connection_timeout}m"
-  }
-
-
-  provisioner "remote-exec" {
-    inline = [
-      "rm -rf nbde_server",
-      "echo 'Cloning into nbde_server...'",
-      "git clone ${var.nbde_repo} --quiet",
-      "cd nbde_server && git checkout ${var.nbde_tag}",
-    ]
-  }
-  provisioner "file" {
-    source      = "${path.cwd}/templates/tang-playbook.yml"
-    destination = "nbde_server/tests/"
-  }
-
-
-  provisioner "file" {
-    source      = "${path.cwd}/templates/subscription.yml"
-    destination = "nbde_server/tests/"
-  }
-
-  provisioner "file" {
-    content     = templatefile("${path.cwd}/templates/tang_inventory", local.tang_inventory)
-    destination = "nbde_server/inventory"
-  }
-
-  provisioner "remote-exec" {
-    inline = [
-      "echo 'Running tang setup playbook...'",
-      "cd nbde_server && export ANSIBLE_HOST_KEY_CHECKING=False && ansible-playbook -i inventory tests/subscription_tang.yml --extra-vars username=${var.rhel_subscription_username} --extra-vars password=${var.rhel_subscription_password} --extra-vars bastion_ip=${data.ibm_pi_instance_ip.bastion_ip[0].ip} && ansible-playbook -i inventory tests/tang-playbook.yml"
-    ]
-  }
-}
-
-########################################################################################################################
-# For the tang instances, the final steps are:
-# 1. Remove cloud-init and sets up rsct
-# 2. Enable fips on the tang servers
-# 3. Reboot the tang instances to enable fips
-
-resource "null_resource" "finalize_tang" {
-  count      = var.fips_compliant ? 1 : 0
-  depends_on = [null_resource.bastion_packages]
-
-  connection {
-    type        = "ssh"
-    user        = var.rhel_username
-    host        = data.ibm_pi_instance_ip.bastion_public_ip[count.index].external_ip
-    private_key = local.private_key
-    agent       = var.ssh_agent
-    timeout     = "${var.connection_timeout}m"
-  }
-
-  provisioner "file" {
-    source      = "${path.cwd}/templates/enable-fips.yml"
-    destination = "fips/tasks/"
-  }
-
-  provisioner "file" {
-    source      = "${path.cwd}/templates/enable-rsct.yml"
-    destination = "rsct/tasks/"
-  }
-
-  provisioner "file" {
-    content     = templatefile("${path.cwd}/templates/tang_inventory", local.tang_inventory)
-    destination = "fips/inventory"
-  }
-
-  provisioner "file" {
-    content     = templatefile("${path.cwd}/templates/tang_inventory", local.tang_inventory)
-    destination = "rsct/inventory"
-  }
-
-  provisioner "remote-exec" {
-    inline = [
-      <<EOF
-echo 'Running tang setup playbook... - fips'
-ANSIBLE_HOST_KEY_CHECKING=False && ansible-playbook -i fips/inventory enable-fips.yml
-
-echo 'Running tang setup playbook... rsct'
-ANSIBLE_HOST_KEY_CHECKING=False && ansible-playbook -i rsct/inventory enable-rsct.yml
-EOF
-    ]
-  }
-}
-
-# Reboot the instance
-resource "ibm_pi_instance_action" "fips_tang_reboot" {
-  depends_on = [
-    null_resource.finalize_tang
-  ]
-  count                = var.fips_compliant ? var.tang.count : 0
-  pi_cloud_instance_id = var.service_instance_id
-
-  # Example: 99999-AA-5554-333-0e1248fa30c6/10111-b114-4d11-b2224-59999ab
-  pi_instance_id = split("/", ibm_pi_instance.tang_inst[count.index].id)[1]
-  pi_action      = "soft-reboot"
-}
-
-########################################################################################################################
-# For the Bastion instances, the final steps are:
-# 1. Remove cloud-init and sets up rsct
-# 2. Enable fips
-# 3. Reboot the bastion instances to enable fips
-
-resource "null_resource" "bastion_remove_cloud_init" {
+# Always have to have this in PowerVS
+resource "null_resource" "bastion_setup_rsct" {
   count      = var.bastion.count
   depends_on = [null_resource.bastion_packages]
 
@@ -531,15 +329,13 @@ resource "null_resource" "bastion_remove_cloud_init" {
     type        = "ssh"
     user        = var.rhel_username
     host        = data.ibm_pi_instance_ip.bastion_public_ip[count.index].external_ip
-    private_key = local.private_key
+    private_key = var.private_key
     agent       = var.ssh_agent
     timeout     = "${var.connection_timeout}m"
   }
   provisioner "remote-exec" {
     inline = [
       <<EOF
-sudo yum remove cloud-init --noautoremove -y
-
 # Adds the RSCT rpms
 sudo yum install -y rsct.basic.ppc64le rsct.core.ppc64le rsct.core.utils.ppc64le rsct.opt.storagerm.ppc64le
 EOF
@@ -547,41 +343,24 @@ EOF
   }
 }
 
-resource "null_resource" "fips_enable" {
-  count      = var.fips_compliant ? var.bastion.count : 0
-  depends_on = [null_resource.bastion_remove_cloud_init]
+# There was an issue in RHEL8.3, this is left as it is known to work.
+resource "null_resource" "bastion_remove_cloud_init" {
+  count      = var.bastion.count
+  depends_on = [null_resource.bastion_setup_rsct]
 
   connection {
     type        = "ssh"
     user        = var.rhel_username
     host        = data.ibm_pi_instance_ip.bastion_public_ip[count.index].external_ip
-    private_key = local.private_key
+    private_key = var.private_key
     agent       = var.ssh_agent
     timeout     = "${var.connection_timeout}m"
   }
   provisioner "remote-exec" {
     inline = [
       <<EOF
-# enable FIPS as required
-if [[ ${var.fips_compliant} = true ]]; then
-  sudo fips-mode-setup --enable
-fi
 sudo yum remove cloud-init --noautoremove -y
 EOF
     ]
   }
 }
-
-# Reboot the bastion instance
-resource "ibm_pi_instance_action" "fips_bastion_reboot" {
-  depends_on = [
-    null_resource.fips_enable
-  ]
-  count                = var.fips_compliant ? var.bastion.count : 0
-  pi_cloud_instance_id = var.service_instance_id
-
-  # Example: 99999-AA-5554-333-0e1248fa30c6/10111-b114-4d11-b2224-59999ab
-  pi_instance_id = split("/", ibm_pi_instance.bastion_inst[count.index].id)[1]
-  pi_action      = "soft-reboot"
-}
-########################################################################################################################

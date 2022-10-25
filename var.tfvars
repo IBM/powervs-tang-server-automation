@@ -10,7 +10,7 @@ vm_id_prefix = "infra-tang-node"
 vm_id        = ""
 tang_count   = 3
 #cluster_id_prefix = "test-tang"
-name_prefix  = "infra-node3"
+name_prefix = "infra-node3"
 
 ### This is default minimalistic config. For PowerVS processors are equal to entitled physical count
 ### So N processors == N physical core entitlements == ceil[N] vCPUs.
@@ -35,7 +35,7 @@ network_name               = "ocp-net-priv"
 rhel_username              = "root"
 public_key_file            = "data/id_rsa.pub"
 private_key_file           = "data/id_rsa"
-rhel_subscription_username = "******"  #Leave this as-is if using CentOS as bastion image
+rhel_subscription_username = "******" #Leave this as-is if using CentOS as bastion image
 rhel_subscription_password = "******" #Leave this as-is if using CentOS as bastion image
 rhel_smt                   = 4
 

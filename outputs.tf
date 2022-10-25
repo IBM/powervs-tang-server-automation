@@ -29,6 +29,6 @@ output "bastion_public_ip" {
   # value = data.ibm_pi_instance_ip.bastion_public_ip
 }
 #data "ibm_pi_instance_ip" "tang_ip"
-output tang_ip {
-  value = "${join(",", data.ibm_pi_instance_ip.tang_ip.*.ip)}"
+output "tang_ip" {
+  value = join(",", data.ibm_pi_instance_ip.tang_ip.*.ip)
 }

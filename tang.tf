@@ -53,7 +53,7 @@ data "ibm_pi_catalog_images" "catalog_images" {
 
 locals {
   catalog_bastion_image = [for x in data.ibm_pi_catalog_images.catalog_images.images : x if x.name == var.rhel_image_name]
-  rhel_image_id      = length(local.catalog_bastion_image) == 0 ? data.ibm_pi_image.bastion[0].id : local.catalog_bastion_image[0].image_id
+  rhel_image_id         = length(local.catalog_bastion_image) == 0 ? data.ibm_pi_image.bastion[0].id : local.catalog_bastion_image[0].image_id
   bastion_storage_pool  = length(local.catalog_bastion_image) == 0 ? data.ibm_pi_image.bastion[0].storage_pool : local.catalog_bastion_image[0].storage_pool
 }
 
@@ -73,7 +73,7 @@ resource "ibm_pi_network" "public_network" {
   pi_network_name      = "${local.name_prefix}-pub-net"
   pi_cloud_instance_id = var.service_instance_id
   pi_network_type      = "pub-vlan"
-  pi_dns = var.dns_forwarders == "" ? [] : [for dns in split(";", var.dns_forwarders) : trimspace(dns)]
+  pi_dns               = var.dns_forwarders == "" ? [] : [for dns in split(";", var.dns_forwarders) : trimspace(dns)]
 }
 
 resource "ibm_pi_key" "key" {
@@ -490,7 +490,7 @@ resource "null_resource" "finalize_tang" {
 echo 'Running tang setup playbook...'
 ANSIBLE_HOST_KEY_CHECKING=False && ansible-playbook -i inventory enable-fips.yml
 EOF
-      ]
+    ]
   }
 }
 
@@ -499,12 +499,12 @@ resource "ibm_pi_instance_action" "fips_tang_reboot" {
   depends_on = [
     null_resource.finalize_tang
   ]
-  count = var.fips_compliant ? var.tang.count : 0
-  pi_cloud_instance_id  = var.service_instance_id
+  count                = var.fips_compliant ? var.tang.count : 0
+  pi_cloud_instance_id = var.service_instance_id
 
   # Example: 99999-AA-5554-333-0e1248fa30c6/10111-b114-4d11-b2224-59999ab
-  pi_instance_id        = split("/", ibm_pi_instance.tang_inst[count.index].id)[1]
-  pi_action             = "soft-reboot"
+  pi_instance_id = split("/", ibm_pi_instance.tang_inst[count.index].id)[1]
+  pi_action      = "soft-reboot"
 }
 
 ########################################################################################################################
@@ -564,11 +564,11 @@ resource "ibm_pi_instance_action" "fips_bastion_reboot" {
   depends_on = [
     null_resource.fips_enable
   ]
-  count = var.fips_compliant ? var.bastion.count : 0
-  pi_cloud_instance_id  = var.service_instance_id
+  count                = var.fips_compliant ? var.bastion.count : 0
+  pi_cloud_instance_id = var.service_instance_id
 
   # Example: 99999-AA-5554-333-0e1248fa30c6/10111-b114-4d11-b2224-59999ab
-  pi_instance_id        = split("/", ibm_pi_instance.bastion_inst[count.index].id)[1]
-  pi_action             = "soft-reboot"
+  pi_instance_id = split("/", ibm_pi_instance.bastion_inst[count.index].id)[1]
+  pi_action      = "soft-reboot"
 }
 ########################################################################################################################

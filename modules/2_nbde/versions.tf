@@ -18,22 +18,16 @@
 #
 ################################################################
 
-output "bastion_ip" {
-  depends_on = [null_resource.bastion_init]
-  value      = data.ibm_pi_instance_ip.bastion_ip.*.ip
-}
-
-output "bastion_public_ip" {
-  depends_on = [null_resource.bastion_packages]
-  value      = data.ibm_pi_instance_ip.bastion_public_ip[0].*.external_ip
-}
-
-output "bastion_instance_ids" {
-  depends_on = [null_resource.bastion_packages]
-  value      = split("/", ibm_pi_instance.bastion[0].id)[1]
-}
-
-output "bastion_network" {
-  depends_on = [null_resource.bastion_packages]
-  value      = data.ibm_pi_network.network.id
+terraform {
+  required_providers {
+    ibm = {
+      source  = "ibm-cloud/ibm"
+      version = "1.46.0"
+    }
+    random = {
+      source  = "hashicorp/random"
+      version = "~> 3.4"
+    }
+  }
+  required_version = ">= 1.2.0"
 }

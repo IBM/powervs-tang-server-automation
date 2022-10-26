@@ -41,6 +41,14 @@ resource "null_resource" "tang_fips_enable" {
     timeout     = "${var.connection_timeout}m"
   }
 
+  provisioner "remote-exec" {
+    inline = [
+      <<EOF
+mkdir -p fips/tasks/
+EOF
+    ]
+  }
+
   provisioner "file" {
     source      = "${path.cwd}/templates/enable-fips.yml"
     destination = "fips/tasks/"
@@ -55,7 +63,7 @@ resource "null_resource" "tang_fips_enable" {
     inline = [
       <<EOF
 echo 'Running enable-fips playbook'
-ANSIBLE_HOST_KEY_CHECKING=False && ansible-playbook -i fips/inventory enable-fips.yml
+ANSIBLE_HOST_KEY_CHECKING=False && ansible-playbook -i fips/inventory fips.yml
 EOF
     ]
   }
@@ -79,6 +87,8 @@ resource "ibm_pi_instance_action" "tang_fips_reboot" {
 # 3. Reboot the bastion instances to enable fips
 
 resource "null_resource" "bastion_fips_enable" {
+  # If the bastion.count is zero, then we're skipping as the bastion
+  # already exists
   count      = var.bastion_count
 
   connection {
@@ -100,10 +110,14 @@ EOF
 }
 
 resource "ibm_pi_instance_action" "bastion_fips_reboot" {
+  # If the bastion.count is zero, then we're skipping as the bastion
+  # already exists
+  count                = var.bastion_count
+
   depends_on = [
     null_resource.bastion_fips_enable
   ]
-  count                = var.bastion_count
+
   pi_cloud_instance_id = var.service_instance_id
 
   # Example: 99999-AA-5554-333-0e1248fa30c6/10111-b114-4d11-b2224-59999ab

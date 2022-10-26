@@ -86,7 +86,7 @@ variable "rhel_username" {
 }
 
 variable "private_key" {
-  description = "private key
+  description = "private key"
 }
 
 variable "connection_timeout" {

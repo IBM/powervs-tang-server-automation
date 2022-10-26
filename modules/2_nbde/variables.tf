@@ -44,24 +44,9 @@ variable "ibmcloud_zone" {
 ################################################################
 # Configure the Instance details
 ################################################################
-
-variable "bastion" {
-  # only one node is supported
-  default = {
-    count      = 1
-    memory     = "16"
-    processors = "1"
-  }
-  validation {
-    condition     = lookup(var.bastion, "count", 1) == 1
-    error_message = "The bastion.count value must be either 1 or 2."
-  }
-}
-
-variable "bastion_ip" {
-  description = ""
-  default     = ""
-}
+variable bastion_network {}
+variable bastion_ip {}
+variable bastion_public_ip {}
 
 variable "tang" {
   # only three nodes are supported

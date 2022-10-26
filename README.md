@@ -1,10 +1,10 @@
-# powervs-tang-server-automation
+# `powervs-tang-server-automation`
 
 The [`powervs-tang-server-automation` project](https://github.com/IBM/powervs-tang-server-automation) provides Terraform
 based automation code to help with the deployment of [Network Bound Disk Encryption (NBDE)](https://github.com/linux-system-roles/nbde_server)
 on [IBM® Power Systems™ Virtual Server on IBM Cloud](https://www.ibm.com/cloud/power-virtual-server). 
 
-The NBDE Server, also called the tang server, is deployed in a 3-node cluster with a single bastion node.
+The NBDE Server, also called the tang server, is deployed in a 3-node cluster with a single [bastion host](https://en.wikipedia.org/wiki/Bastion_host).
 
 # Installation Quickstart
 
@@ -21,7 +21,7 @@ The NBDE Server, also called the tang server, is deployed in a 3-node cluster wi
 You'll need to use git to clone the deployment code when working off the master branch
 
 ```
-$ git clone https://github.com/ocp-power-automation/ocp4-upi-powervs
+$ git clone https://github.com/ibm/powervs-tang-server-automation
 $ cd powervs-tang-server-automation
 ```
 
@@ -51,10 +51,10 @@ Run the following commands from within the directory.
 ```
 $ terraform init
 $ terraform plan --var-file=var.tfvars
-$ terraform apply -var-file var.tfvars
+$ terraform apply -var-file=var.tfvars
 ```
 
-Note: Terraform Version should be ~>0.13.0
+Note: Terraform Version should be ~>1.2.0
 
 Now wait for the installation to complete. It may take around 20 mins to complete provisioning.
 
@@ -95,6 +95,27 @@ Destroy the Tang Cluster
 ```
 $ terraform apply -var-file var.tfvars
 ```
+
+## Automation Host Prerequisites
+
+The automation needs to run from a system with internet access. This could be your laptop or a VM with public internet connectivity. This automation code have been tested on the following Operating Systems:
+- Mac OSX (Darwin)
+- Linux (x86_64/ppc64le)
+- Windows 10
+
+Follow the [guide](docs/automation_host_prereqs.md) to complete the prerequisites.
+
+## PowerVS Prerequisites
+
+Follow the [guide](docs/prereqs_powervs.md) to complete the PowerVS prerequisites.
+
+## Tang Infra Install
+
+Follow the [quickstart](docs/quickstart.md) guide for NBDE installation on PowerVS.
+
+## Make It Better
+
+For bugs/enhancement requests etc. please open a GitHub [issue](https://github.com/ibm/powervs-tang-server-automation/issues)
 
 ## Contributing
 Please see the [contributing doc](CONTRIBUTING.md) for more details.

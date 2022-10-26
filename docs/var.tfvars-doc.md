@@ -162,3 +162,82 @@ bastion_health_status       = "OK"
 tang_health_status    = "WARNING"
 ```
 
+## Requirements
+
+| Name | Version |
+|------|---------|
+| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.2.0 |
+| <a name="requirement_ibm"></a> [ibm](#requirement\_ibm) | 1.46.0 |
+| <a name="requirement_random"></a> [random](#requirement\_random) | ~> 3.4 |
+
+## Providers
+
+| Name | Version |
+|------|---------|
+| <a name="provider_random"></a> [random](#provider\_random) | 3.4.3 |
+
+## Modules
+
+| Name | Source | Version |
+|------|--------|---------|
+| <a name="module_bastion"></a> [bastion](#module\_bastion) | modules/1_bastion | n/a |
+| <a name="module_fips"></a> [fips](#module\_fips) | ./modules/3_fips | n/a |
+| <a name="module_nbde"></a> [nbde](#module\_nbde) | ./modules/2_nbde | n/a |
+
+## Resources
+
+| Name | Type |
+|------|------|
+| [random_id.label](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/id) | resource |
+
+## Inputs
+
+| Name | Description | Type | Default | Required |
+|------|-------------|------|---------|:--------:|
+| <a name="input_ansible_repo_name"></a> [ansible\_repo\_name](#input\_ansible\_repo\_name) | n/a | `string` | `"ansible-2.9-for-rhel-8-ppc64le-rpms"` | no |
+| <a name="input_bastion"></a> [bastion](#input\_bastion) | n/a | `map` | <pre>{<br>  "count": 1,<br>  "memory": "16",<br>  "processors": "1"<br>}</pre> | no |
+| <a name="input_bastion_health_status"></a> [bastion\_health\_status](#input\_bastion\_health\_status) | Specify if bastion should poll for the Health Status to be OK or WARNING. Default is OK. | `string` | `"OK"` | no |
+| <a name="input_bastion_ip"></a> [bastion\_ip](#input\_bastion\_ip) | n/a | `string` | `""` | no |
+| <a name="input_cluster_id"></a> [cluster\_id](#input\_cluster\_id) | n/a | `string` | `""` | no |
+| <a name="input_connection_timeout"></a> [connection\_timeout](#input\_connection\_timeout) | Timeout in minutes for SSH connections | `number` | `30` | no |
+| <a name="input_dns_forwarders"></a> [dns\_forwarders](#input\_dns\_forwarders) | n/a | `string` | `"8.8.8.8; 8.8.4.4"` | no |
+| <a name="input_domain"></a> [domain](#input\_domain) | Domain name to use to setup the cluster. A DNS Forward Zone should be a registered in IBM Cloud if use\_ibm\_cloud\_services = true | `string` | `"ibm.com"` | no |
+| <a name="input_fips_compliant"></a> [fips\_compliant](#input\_fips\_compliant) | Set to true to enable usage of FIPS for the deployment. | `bool` | `false` | no |
+| <a name="input_ibmcloud_api_key"></a> [ibmcloud\_api\_key](#input\_ibmcloud\_api\_key) | IBM Cloud API key associated with user's identity | `string` | `"<key>"` | no |
+| <a name="input_ibmcloud_region"></a> [ibmcloud\_region](#input\_ibmcloud\_region) | The IBM Cloud region where you want to create the resources | `string` | `""` | no |
+| <a name="input_ibmcloud_zone"></a> [ibmcloud\_zone](#input\_ibmcloud\_zone) | The zone of an IBM Cloud region where you want to create Power System resources | `string` | `""` | no |
+| <a name="input_name_prefix"></a> [name\_prefix](#input\_name\_prefix) | n/a | `string` | n/a | yes |
+| <a name="input_nbde_repo"></a> [nbde\_repo](#input\_nbde\_repo) | n/a | `string` | `"https://github.com/linux-system-roles/nbde_server"` | no |
+| <a name="input_nbde_tag"></a> [nbde\_tag](#input\_nbde\_tag) | n/a | `string` | `"1.1.5"` | no |
+| <a name="input_network_name"></a> [network\_name](#input\_network\_name) | The name of the network to be used for deploy operations | `string` | `"my_network_tang"` | no |
+| <a name="input_private_key"></a> [private\_key](#input\_private\_key) | content of private ssh key | `string` | `""` | no |
+| <a name="input_private_key_file"></a> [private\_key\_file](#input\_private\_key\_file) | Path to private key file | `string` | `"data/id_rsa"` | no |
+| <a name="input_private_network_mtu"></a> [private\_network\_mtu](#input\_private\_network\_mtu) | MTU value for the private network interface on RHEL and RHCOS nodes | `number` | `1450` | no |
+| <a name="input_processor_type"></a> [processor\_type](#input\_processor\_type) | The type of processor mode (shared/dedicated) | `string` | `"shared"` | no |
+| <a name="input_proxy"></a> [proxy](#input\_proxy) | External Proxy server details in a map | `object({})` | `{}` | no |
+| <a name="input_public_key"></a> [public\_key](#input\_public\_key) | Public key | `string` | `""` | no |
+| <a name="input_public_key_file"></a> [public\_key\_file](#input\_public\_key\_file) | Path to public key file | `string` | `"data/id_rsa.pub"` | no |
+| <a name="input_rhel_image_name"></a> [rhel\_image\_name](#input\_rhel\_image\_name) | Name of the RHEL image that you want to use for the bastion node | `string` | `"rhel-8.6"` | no |
+| <a name="input_rhel_smt"></a> [rhel\_smt](#input\_rhel\_smt) | SMT value to set on the bastion node. Eg: on,off,2,4,8 | `number` | `4` | no |
+| <a name="input_rhel_subscription_activationkey"></a> [rhel\_subscription\_activationkey](#input\_rhel\_subscription\_activationkey) | n/a | `string` | `""` | no |
+| <a name="input_rhel_subscription_org"></a> [rhel\_subscription\_org](#input\_rhel\_subscription\_org) | n/a | `string` | `""` | no |
+| <a name="input_rhel_subscription_password"></a> [rhel\_subscription\_password](#input\_rhel\_subscription\_password) | n/a | `string` | `""` | no |
+| <a name="input_rhel_subscription_username"></a> [rhel\_subscription\_username](#input\_rhel\_subscription\_username) | n/a | `string` | `""` | no |
+| <a name="input_rhel_username"></a> [rhel\_username](#input\_rhel\_username) | n/a | `string` | `"root"` | no |
+| <a name="input_service_instance_id"></a> [service\_instance\_id](#input\_service\_instance\_id) | The cloud instance ID of your account | `string` | `""` | no |
+| <a name="input_setup_squid_proxy"></a> [setup\_squid\_proxy](#input\_setup\_squid\_proxy) | Flag to install and configure squid proxy server on bastion node | `bool` | `false` | no |
+| <a name="input_ssh_agent"></a> [ssh\_agent](#input\_ssh\_agent) | Enable or disable SSH Agent. Can correct some connectivity issues. Default: false | `bool` | `false` | no |
+| <a name="input_system_type"></a> [system\_type](#input\_system\_type) | The type of system (s922/e980) | `string` | `"s922"` | no |
+| <a name="input_tang"></a> [tang](#input\_tang) | n/a | `map` | <pre>{<br>  "count": 3,<br>  "memory": "16",<br>  "processors": "1"<br>}</pre> | no |
+| <a name="input_tang_count"></a> [tang\_count](#input\_tang\_count) | n/a | `any` | n/a | yes |
+| <a name="input_tang_health_status"></a> [tang\_health\_status](#input\_tang\_health\_status) | n/a | `any` | n/a | yes |
+| <a name="input_vm_id"></a> [vm\_id](#input\_vm\_id) | Must consist of lower case alphanumeric characters, '-' or '.', and must start and end with an alphanumeric character Length cannot exceed 14 characters when combined with cluster\_id\_prefix | `string` | `""` | no |
+| <a name="input_vm_id_prefix"></a> [vm\_id\_prefix](#input\_vm\_id\_prefix) | Must consist of lower case alphanumeric characters, '-' or '.', and must start and end with an alphanumeric character Should not be more than 14 characters | `string` | `"infra-node"` | no |
+
+## Outputs
+
+| Name | Description |
+|------|-------------|
+| <a name="output_bastion_ip"></a> [bastion\_ip](#output\_bastion\_ip) | n/a |
+| <a name="output_bastion_public_ip"></a> [bastion\_public\_ip](#output\_bastion\_public\_ip) | n/a |
+| <a name="output_tang_ip"></a> [tang\_ip](#output\_tang\_ip) | n/a |

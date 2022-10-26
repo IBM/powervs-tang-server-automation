@@ -75,14 +75,16 @@ variable "system_type" {
 
 variable "network_name" {
   description = "The name of the network to be used for deploy operations"
-  default     = "my_network_tang"
+  default     = "ocp-net"
 }
 
 variable "dns_forwarders" {
   default = "8.8.8.8; 8.8.4.4"
 }
 
-variable "name_prefix" {}
+variable "name_prefix" {
+  default     = ""
+}
 
 variable "bastion_health_status" {
   type        = string
@@ -94,7 +96,9 @@ variable "bastion_health_status" {
   }
 }
 
-variable "ansible_repo_name" {}
+variable "ansible_repo_name" {
+  default = "ansible-2.9-for-rhel-8-ppc64le-rpms"
+}
 
 variable "rhel_subscription_username" {
   default = ""
@@ -114,7 +118,7 @@ variable "rhel_subscription_activationkey" {
 }
 variable "domain" {}
 variable "rhel_smt" {}
-variable "private_network_mtu" {}
+
 variable "setup_squid_proxy" {
   type        = bool
   description = "Flag to install and configure squid proxy server on bastion node"
@@ -145,12 +149,26 @@ variable "rhel_username" {
   default = "root"
 }
 
+variable "public_key_file" {
+  description = "Path to public key file"
+  # if empty, will default to ${path.cwd}/data/id_rsa.pub
+  default = "data/id_rsa.pub"
+}
+
+variable "private_key_file" {
+  description = "Path to private key file"
+  # if empty, will default to ${path.cwd}/data/id_rsa
+  default = "data/id_rsa"
+}
+
 variable "private_key" {
   description = "private key"
+  default = ""
 }
 
 variable "public_key" {
   description = "public key"
+  default = ""
 }
 
 variable "connection_timeout" {
@@ -161,4 +179,10 @@ variable "connection_timeout" {
 variable "ssh_agent" {
   description = "Enable or disable SSH Agent. Can correct some connectivity issues. Default: false"
   default     = false
+}
+
+variable "private_network_mtu" {
+  type        = number
+  description = "MTU value for the private network interface on RHEL and RHCOS nodes"
+  default     = 1450
 }

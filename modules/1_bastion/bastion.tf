@@ -24,6 +24,13 @@ provider "ibm" {
   zone             = var.ibmcloud_zone
 }
 
+locals {
+  private_key_file = var.private_key_file == "" ? "${path.cwd}/data/id_rsa" : "${path.cwd}/${var.private_key_file}"
+  public_key_file  = var.public_key_file == "" ? "${path.cwd}/data/id_rsa.pub" : "${path.cwd}/${var.public_key_file}"
+  private_key      = var.private_key == "" ? file(coalesce(local.private_key_file, "/dev/null")) : var.private_key
+  public_key       = var.public_key == "" ? file(coalesce(local.public_key_file, "/dev/null")) : var.public_key
+}
+
 data "ibm_pi_catalog_images" "catalog_images" {
   pi_cloud_instance_id = var.service_instance_id
 }
@@ -55,10 +62,11 @@ resource "ibm_pi_network" "public_network" {
 resource "ibm_pi_key" "key" {
   pi_cloud_instance_id = var.service_instance_id
   pi_key_name          = "${var.name_prefix}-keypair"
-  pi_ssh_key           = var.public_key
+  pi_ssh_key           = local.public_key
 }
 
 resource "ibm_pi_instance" "bastion" {
+  depends_on = [ibm_pi_key.key]
   count = var.bastion.count
 
   pi_memory            = var.bastion["memory"]
@@ -66,7 +74,7 @@ resource "ibm_pi_instance" "bastion" {
   pi_instance_name     = "${var.name_prefix}-bastion-${count.index}"
   pi_proc_type         = var.processor_type
   pi_image_id          = local.rhel_image_id
-  pi_key_pair_name     = ibm_pi_key.key.key_id
+  pi_key_pair_name     = "${var.name_prefix}-keypair"
   pi_sys_type          = var.system_type
   pi_cloud_instance_id = var.service_instance_id
   pi_health_status     = var.bastion_health_status
@@ -106,7 +114,7 @@ resource "null_resource" "bastion_init" {
     type        = "ssh"
     user        = var.rhel_username
     host        = data.ibm_pi_instance_ip.bastion_public_ip[count.index].external_ip
-    private_key = var.private_key
+    private_key = local.private_key
     agent       = var.ssh_agent
     timeout     = "${var.connection_timeout}m"
   }
@@ -116,11 +124,11 @@ resource "null_resource" "bastion_init" {
     ]
   }
   provisioner "file" {
-    content     = var.private_key
+    content     = local.private_key
     destination = ".ssh/id_rsa"
   }
   provisioner "file" {
-    content     = var.public_key
+    content     = local.public_key
     destination = ".ssh/id_rsa.pub"
   }
   provisioner "remote-exec" {
@@ -128,7 +136,7 @@ resource "null_resource" "bastion_init" {
       <<EOF
 sudo chmod 600 .ssh/id_rsa*
 sudo sed -i.bak -e 's/^ - set_hostname/# - set_hostname/' -e 's/^ - update_hostname/# - update_hostname/' /etc/cloud/cloud.cfg
-sudo hostnamectl set-hostname --static ${lower(var.name_prefix)}bastion-${count.index}.${var.domain}
+sudo hostnamectl set-hostname --static ${lower(var.name_prefix)}-bastion-${count.index}.${var.domain}
 echo 'HOSTNAME=${lower(var.name_prefix)}bastion-${count.index}.${var.domain}' | sudo tee -a /etc/sysconfig/network > /dev/null
 sudo hostname -F /etc/hostname
 echo 'vm.max_map_count = 262144' | sudo tee --append /etc/sysctl.conf > /dev/null
@@ -151,14 +159,14 @@ EOF
 }
 
 resource "null_resource" "setup_proxy_info" {
-  count      = !var.setup_squid_proxy && var.proxy.server != "" ? var.bastion.count : 0
+  count      = !var.setup_squid_proxy && length(var.proxy) != 0 ? var.bastion.count : 0
   depends_on = [null_resource.bastion_init]
 
   connection {
     type        = "ssh"
     user        = var.rhel_username
     host        = data.ibm_pi_instance_ip.bastion_public_ip[count.index].external_ip
-    private_key = var.private_key
+    private_key = local.private_key
     agent       = var.ssh_agent
     timeout     = "${var.connection_timeout}m"
   }
@@ -168,24 +176,24 @@ resource "null_resource" "setup_proxy_info" {
       <<EOF
 echo "Setting up proxy details..."
 # System
-set http_proxy="http://${var.proxy.user_pass}${var.proxy.server}:${var.proxy.port}"
-set https_proxy="http://${var.proxy.user_pass}${var.proxy.server}:${var.proxy.port}"
-set no_proxy="${var.proxy.no_proxy}"
-echo "export http_proxy=\"http://${var.proxy.user_pass}${var.proxy.server}:${var.proxy.port}\"" | sudo tee /etc/profile.d/http_proxy.sh > /dev/null
-echo "export https_proxy=\"http://${var.proxy.user_pass}${var.proxy.server}:${var.proxy.port}\"" | sudo tee -a /etc/profile.d/http_proxy.sh > /dev/null
-echo "export no_proxy=\"${var.proxy.no_proxy}\"" | sudo tee -a /etc/profile.d/http_proxy.sh > /dev/null
+set http_proxy="http://${var.proxy[0].user_pass}${var.proxy[0].server}:${var.proxy[0].port}"
+set https_proxy="http://${var.proxy[0].user_pass}${var.proxy[0].server}:${var.proxy[0].port}"
+set no_proxy="${var.proxy[0].no_proxy}"
+echo "export http_proxy=\"http://${var.proxy[0].user_pass}${var.proxy[0].server}:${var.proxy[0].port}\"" | sudo tee /etc/profile.d/http_proxy.sh > /dev/null
+echo "export https_proxy=\"http://${var.proxy[0].user_pass}${var.proxy[0].server}:${var.proxy[0].port}\"" | sudo tee -a /etc/profile.d/http_proxy.sh > /dev/null
+echo "export no_proxy=\"${var.proxy[0].no_proxy}\"" | sudo tee -a /etc/profile.d/http_proxy.sh > /dev/null
 # RHSM
-sudo sed -i -e 's/^proxy_hostname =.*/proxy_hostname = ${var.proxy.server}/' /etc/rhsm/rhsm.conf
-sudo sed -i -e 's/^proxy_port =.*/proxy_port = ${var.proxy.port}/' /etc/rhsm/rhsm.conf
-sudo sed -i -e 's/^proxy_user =.*/proxy_user = ${var.proxy.user}/' /etc/rhsm/rhsm.conf
-sudo sed -i -e 's/^proxy_password =.*/proxy_password = ${var.proxy.user_pass}/' /etc/rhsm/rhsm.conf
+sudo sed -i -e 's/^proxy_hostname =.*/proxy_hostname = ${var.proxy[0].server}/' /etc/rhsm/rhsm.conf
+sudo sed -i -e 's/^proxy_port =.*/proxy_port = ${var.proxy[0].port}/' /etc/rhsm/rhsm.conf
+sudo sed -i -e 's/^proxy_user =.*/proxy_user = ${var.proxy[0].user}/' /etc/rhsm/rhsm.conf
+sudo sed -i -e 's/^proxy_password =.*/proxy_password = ${var.proxy[0].user_pass}/' /etc/rhsm/rhsm.conf
 # YUM/DNF
 # Incase /etc/yum.conf is a symlink to /etc/dnf/dnf.conf we try to update the original file
 yum_dnf_conf=$(readlink -f -q /etc/yum.conf)
 sudo sed -i -e '/^proxy.*/d' $yum_dnf_conf
-echo "proxy=http://${var.proxy.server}:${var.proxy.port}" | sudo tee -a $yum_dnf_conf > /dev/null
-echo "proxy_username=${var.proxy.user}" | sudo tee -a $yum_dnf_conf > /dev/null
-echo "proxy_password=${var.proxy.user_pass}" | sudo tee -a $yum_dnf_conf > /dev/null
+echo "proxy=http://${var.proxy[0].server}:${var.proxy[0].port}" | sudo tee -a $yum_dnf_conf > /dev/null
+echo "proxy_username=${var.proxy[0].user}" | sudo tee -a $yum_dnf_conf > /dev/null
+echo "proxy_password=${var.proxy[0].user_pass}" | sudo tee -a $yum_dnf_conf > /dev/null
 EOF
     ]
   }
@@ -197,7 +205,7 @@ resource "null_resource" "bastion_register" {
   triggers = {
     external_ip        = data.ibm_pi_instance_ip.bastion_public_ip[count.index].external_ip
     rhel_username      = var.rhel_username
-    private_key        = var.private_key
+    private_key        = local.private_key
     ssh_agent          = var.ssh_agent
     connection_timeout = var.connection_timeout
   }
@@ -259,7 +267,7 @@ resource "null_resource" "enable_repos" {
     type        = "ssh"
     user        = var.rhel_username
     host        = data.ibm_pi_instance_ip.bastion_public_ip[count.index].external_ip
-    private_key = var.private_key
+    private_key = local.private_key
     agent       = var.ssh_agent
     timeout     = "${var.connection_timeout}m"
   }
@@ -271,7 +279,12 @@ resource "null_resource" "enable_repos" {
 if ( [[ -z "${var.rhel_subscription_username}" ]] || [[ "${var.rhel_subscription_username}" == "<subscription-id>" ]] ) && [[ -z "${var.rhel_subscription_org}" ]]; then
   sudo yum install -y epel-release
 else
-  sudo subscription-manager repos --enable ${var.ansible_repo_name}
+  os_ver=$(cat /etc/os-release | egrep "^VERSION_ID=" | awk -F'"' '{print $2}')
+  if [[ $os_ver != "9"* ]]; then
+    sudo subscription-manager repos --enable ${var.ansible_repo_name}
+  else
+    sudo yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm
+  fi
 fi
 EOF
     ]
@@ -289,7 +302,7 @@ resource "null_resource" "bastion_packages" {
     type        = "ssh"
     user        = var.rhel_username
     host        = data.ibm_pi_instance_ip.bastion_public_ip[count.index].external_ip
-    private_key = var.private_key
+    private_key = local.private_key
     agent       = var.ssh_agent
     timeout     = "${var.connection_timeout}m"
   }
@@ -329,7 +342,7 @@ resource "null_resource" "bastion_setup_rsct" {
     type        = "ssh"
     user        = var.rhel_username
     host        = data.ibm_pi_instance_ip.bastion_public_ip[count.index].external_ip
-    private_key = var.private_key
+    private_key = local.private_key
     agent       = var.ssh_agent
     timeout     = "${var.connection_timeout}m"
   }
@@ -352,7 +365,7 @@ resource "null_resource" "bastion_remove_cloud_init" {
     type        = "ssh"
     user        = var.rhel_username
     host        = data.ibm_pi_instance_ip.bastion_public_ip[count.index].external_ip
-    private_key = var.private_key
+    private_key = local.private_key
     agent       = var.ssh_agent
     timeout     = "${var.connection_timeout}m"
   }
@@ -360,6 +373,18 @@ resource "null_resource" "bastion_remove_cloud_init" {
     inline = [
       <<EOF
 sudo yum remove cloud-init --noautoremove -y
+EOF
+    ]
+  }
+
+  # destroy optimistically destroys the subscription (if it fails, and it can it pipes to true to shortcircuit)
+  provisioner "remote-exec" {
+    when = "destroy"
+    on_failure = continue
+    inline = [
+      <<EOF
+sudo subscription-manager unregister || true
+sudo subscription-manager remove --all || true
 EOF
     ]
   }

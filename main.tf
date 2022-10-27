@@ -44,7 +44,7 @@ locals {
 module "bastion" {
   # If the bastion.count is zero, then we're skipping as the bastion already exists
   count  = var.bastion.count >= 1 ? 1 : 0
-  source = "modules/1_bastion"
+  source = "./modules/1_bastion/"
 
   # IBM Cloud
   ibmcloud_api_key    = var.ibmcloud_api_key

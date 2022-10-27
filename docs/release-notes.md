@@ -31,4 +31,3 @@
    - Added support for rekeying and fetching
    - Use non-test path for automation
    - Changed relative paths used for the ansible automation
-

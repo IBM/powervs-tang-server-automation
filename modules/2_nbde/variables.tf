@@ -228,4 +228,6 @@ variable "tang_health_status" {
 ### NBDE Server configuration
 ################################################################
 variable "nbde_repo" { default = "https://github.com/linux-system-roles/nbde_server" }
-variable "nbde_tag" { default = "1.1.5" }
+# sha instead of tag
+# 1.1.5 = 7a5863f186ebc46a62d6576e826233ea274529e2
+variable "nbde_tag" { default = "7a5863f186ebc46a62d6576e826233ea274529e2" }

@@ -1,0 +1,14 @@
+
+  - name: Open firewall for Tang
+    hosts: nbde-servers
+    tasks:
+
+      - firewalld:
+          port: 443/tcp
+          permanent: yes
+          immediate: yes
+          state: enabled
+  - name: Deploy NBDE Tang servers
+    hosts: nbde-servers
+    roles:
+      - rhel-system-roles.nbde_server

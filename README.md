@@ -6,6 +6,8 @@ on [IBM® Power Systems™ Virtual Server on IBM Cloud](https://www.ibm.com/clou
 
 The NBDE Server, also called the tang server, is deployed in a 3-node cluster with a single [bastion host](https://en.wikipedia.org/wiki/Bastion_host).
 
+Note, the server socket listens on port 7500.
+
 # Installation Quickstart
 
 - [Installation Quickstart](#installation-quickstart)
@@ -80,20 +82,55 @@ In case of any errors, you'll have to re-apply.
 
 ## Post Install
 
-#### Fetch Keys from Bastion Node
+### Fetch Keys from Bastion Node
 
 Once the deployment is completed successfully, you can connect to bastion node and fetch keys for every tang server
 
 ```
-$ cat /root/tang-keys/allnodes.txt
+$ cat /root/nbde_server/keys/*
 ```
 
 ### Destroy Tang Server
 
-Destroy the Tang Cluster
+Destroy the Tang Server
 
 ```
-$ terraform apply -var-file var.tfvars
+$ terraform destroy -var-file var.tfvars
+```
+
+### Backup
+
+Per [Red Hat](https://www.redhat.com/en/blog/advanced-automation-and-management-network-bound-disk-encryption-rhel-system-roles)'s blog, we've added the `nbde_server_fetch_keys: yes` This downloads the keys to the 'bastion host' and customers are expected to backup the keys using their operations processes.
+
+### Re-keying all NBDE servers
+
+1. Connect to your Bastion host
+2. Change directory to `nbde_server`
+`cd nbde_server`
+3. Run the playbook with the rotate keys variable
+
+```terraform
+ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i inventory tasks/powervs-tang.yml -e nbde_server_rotate_keys=yes
+```
+
+### Re-keying (Deleting) a single Tang server keys
+
+1. Connect to your Bastion host
+
+2. Change directory to `nbde_server`
+
+```cd nbde_server```
+
+3. Copy the `inventory` to `inventory-del`
+
+```cp inventory inventory-del```
+
+4. Edit the `inventory-del` for the hosts you want to rekey
+
+5. Run the playbook with the rotate keys variable
+
+```terraform
+ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i inventory tasks/powervs-tang.yml -e nbde_server_rotate_keys=yes
 ```
 
 ## Automation Host Prerequisites

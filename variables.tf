@@ -58,8 +58,8 @@ variable "bastion" {
   }
 }
 
-variable "bastion_ip" {
-  description = ""
+variable "bastion_public_ip" {
+  description = "The bastion_public_ip is the IP used to deploy the NBDE servers when the bastion.count = 0, and uses a pre-existing bastion host"
   default     = ""
 }
 

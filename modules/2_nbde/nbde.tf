@@ -221,7 +221,7 @@ resource "null_resource" "tang_allnodes" {
     inline = [
       <<EOF
 echo "=All Nodes Text="
-cat /root/tang-keys/allnodes.txt
+cat '/root/nbde_server/keys/*'
 EOF
     ]
   }

@@ -80,6 +80,7 @@ module "bastion" {
 module "nbde" {
   source = "./modules/2_nbde"
 
+  # Conditionally set bastion_public_ip or from bastion module if bastion was deployed
   service_instance_id             = var.service_instance_id
   processor_type                  = var.processor_type
   system_type                     = var.system_type

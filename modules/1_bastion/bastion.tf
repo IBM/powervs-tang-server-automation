@@ -361,14 +361,23 @@ resource "null_resource" "bastion_remove_cloud_init" {
   count      = var.bastion.count
   depends_on = [null_resource.bastion_setup_rsct]
 
+  triggers = {
+    external_ip        = data.ibm_pi_instance_ip.bastion_public_ip[count.index].external_ip
+    rhel_username      = var.rhel_username
+    private_key        = var.private_key
+    ssh_agent          = var.ssh_agent
+    connection_timeout = "${var.connection_timeout}m"
+  }
+
   connection {
     type        = "ssh"
-    user        = var.rhel_username
-    host        = data.ibm_pi_instance_ip.bastion_public_ip[count.index].external_ip
-    private_key = local.private_key
-    agent       = var.ssh_agent
-    timeout     = "${var.connection_timeout}m"
+    user        = self.triggers.rhel_username
+    host        = self.triggers.external_ip
+    private_key = self.triggers.private_key
+    agent       = self.triggers.ssh_agent
+    timeout     = self.triggers.connection_timeout
   }
+
   provisioner "remote-exec" {
     inline = [
       <<EOF
@@ -381,6 +390,7 @@ EOF
   provisioner "remote-exec" {
     when = "destroy"
     on_failure = continue
+
     inline = [
       <<EOF
 sudo subscription-manager unregister || true

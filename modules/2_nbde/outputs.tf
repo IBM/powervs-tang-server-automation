@@ -22,7 +22,6 @@ output "tang_ips" {
   value = join(",", data.ibm_pi_instance_ip.tang_ip.*.ip)
 }
 
-# Tang instance ids
 output "tang_instance_ids" {
-  value = split("/", ibm_pi_instance.tang_inst.*.id)[1]
+  value = ibm_pi_instance.tang.*.id
 }

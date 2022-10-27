@@ -80,7 +80,7 @@ resource "ibm_pi_instance" "tang" {
 }
 
 data "ibm_pi_instance_ip" "tang_ip" {
-  count      = var.tang_count
+  count      = var.tang.count
   depends_on = [ibm_pi_instance.tang]
 
   pi_instance_name     = ibm_pi_instance.tang[count.index].pi_instance_name
@@ -96,19 +96,27 @@ locals {
 }
 
 resource "null_resource" "tang_install" {
+  count = 1
+
   depends_on = [
     ibm_pi_instance.tang
   ]
 
-  count = 1
+  triggers = {
+    external_ip        = var.bastion_public_ip
+    rhel_username      = var.rhel_username
+    private_key        = local.private_key
+    ssh_agent          = var.ssh_agent
+    connection_timeout = "${var.connection_timeout}m"
+  }
 
   connection {
     type        = "ssh"
-    user        = var.rhel_username
-    host        = var.bastion_public_ip
-    private_key = var.private_key
-    agent       = var.ssh_agent
-    timeout     = "${var.connection_timeout}m"
+    user        = self.triggers.rhel_username
+    host        = self.triggers.external_ip
+    private_key = self.triggers.private_key
+    agent       = self.triggers.ssh_agent
+    timeout     = self.triggers.connection_timeout
   }
 
   # If the bastion has an existing nbde_server folder, it erases, and clones a repo with a single branch (tag)
@@ -126,17 +134,17 @@ EOF
   # Copy over the files into the existing playbook and ensures the names are unique
   provisioner "file" {
     source      = "${path.cwd}/templates/powervs-setup.yml"
-    destination = "nbde_server/tasks/"
+    destination = "nbde_server/tasks/powervs-setup.yml"
   }
 
   provisioner "file" {
     source      = "${path.cwd}/templates/powervs-tang.yml"
-    destination = "nbde_server/tasks/"
+    destination = "nbde_server/tasks/powervs-tang.yml"
   }
 
   provisioner "file" {
     source      = "${path.cwd}/templates/powervs-remove-subscription.yml"
-    destination = "nbde_server/tasks/"
+    destination = "nbde_server/tasks/powervs-remove-subscription.yml"
   }
 
   provisioner "file" {
@@ -146,14 +154,26 @@ EOF
 
   # Added quotes to avoid globbing issues in the extra-vars
   provisioner "remote-exec" {
-    when = "apply",
+    when = create
     inline = [
       <<EOF
 echo 'Running tang setup playbook...'
 cd nbde_server
 ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i inventory tasks/powervs-setup.yml --extra-vars username="${var.rhel_subscription_username}"\
   --extra-vars password="${var.rhel_subscription_password}"\
-  --extra-vars bastion_ip="${var.bastion_ip}"
+  --extra-vars bastion_ip="${var.bastion_ip}" \
+  --extra-vars rhel_subscription_org="${var.rhel_subscription_org}" \
+  --extra-vars ansible_repo_name="${var.ansible_repo_name}" \
+  --extra-vars rhel_subscription_activationkey="${var.rhel_subscription_activationkey}" \
+  --extra-vars proxy_user="${local.proxy.user}" \
+  --extra-vars proxy_user_pass="${local.proxy.user_pass}" \
+  --extra-vars proxy_server="${local.proxy.server}" \
+  --extra-vars proxy_port="${local.proxy.port}" \
+  --extra-vars no_proxy="${local.proxy.no_proxy}" \
+  --extra-vars private_network_mtu="${var.private_network_mtu}"  \
+  --extra-vars domain="${var.domain}"  \
+  --extra-vars name_prefix="${var.name_prefix}"
+
 ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i inventory tasks/powervs-tang.yml
 EOF
     ]
@@ -161,12 +181,47 @@ EOF
 
   # destroy optimistically destroys the subscription (if it fails, and it can it pipes to true to shortcircuit)
   provisioner "remote-exec" {
-    when = "destroy"
+    when = destroy
     on_failure = continue
     inline = [
       <<EOF
 cd nbde_server
 ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i inventory tasks/powervs-remove-subscription.yml
+EOF
+    ]
+  }
+}
+
+resource "null_resource" "tang_allnodes" {
+  count = 1
+
+  depends_on = [
+    ibm_pi_instance.tang
+  ]
+
+  triggers = {
+    external_ip        = var.bastion_public_ip
+    rhel_username      = var.rhel_username
+    private_key        = local.private_key
+    ssh_agent          = var.ssh_agent
+    connection_timeout = "${var.connection_timeout}m"
+  }
+
+  connection {
+    type        = "ssh"
+    user        = self.triggers.rhel_username
+    host        = self.triggers.external_ip
+    private_key = self.triggers.private_key
+    agent       = self.triggers.ssh_agent
+    timeout     = self.triggers.connection_timeout
+  }
+
+  provisioner "remote-exec" {
+    when = create
+    inline = [
+      <<EOF
+echo "=All Nodes Text="
+cat /root/tang-keys/allnodes.txt
 EOF
     ]
   }

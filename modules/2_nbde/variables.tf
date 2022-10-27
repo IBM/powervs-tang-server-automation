@@ -130,16 +130,6 @@ variable "ssh_agent" {
   default     = false
 }
 
-variable "bastion_health_status" {
-  type        = string
-  description = "Specify if bastion should poll for the Health Status to be OK or WARNING. Default is OK."
-  default     = "OK"
-  validation {
-    condition     = contains(["OK", "WARNING"], var.bastion_health_status)
-    error_message = "The bastion_health_status value must be either OK or WARNING."
-  }
-}
-
 variable "dns_forwarders" {
   default = "8.8.8.8; 8.8.4.4"
 }
@@ -186,13 +176,6 @@ variable "cluster_id" {
 
 variable "domain" {
   type        = string
-  default     = "ibm.com"
-  description = "Domain name to use to setup the cluster. A DNS Forward Zone should be a registered in IBM Cloud if use_ibm_cloud_services = true"
-
-  validation {
-    condition     = can(regex("^[a-z0-9]+[a-zA-Z0-9_\\-.]*[a-z0-9]+$", var.cluster_domain))
-    error_message = "The cluster_domain value must be a lower case alphanumeric characters, '-' or '.', and must start and end with an alphanumeric character."
-  }
 }
 
 
@@ -237,21 +220,12 @@ variable "ansible_repo_name" {
   default = "ansible-2.9-for-rhel-8-ppc64le-rpms"
 }
 
-variable "tang_health_status" {}
-variable "tang_count" {}
+variable "tang_health_status" {
+  default = "WARNING"
+}
 
 ################################################################
 ### NBDE Server configuration
 ################################################################
-
 variable "nbde_repo" { default = "https://github.com/linux-system-roles/nbde_server" }
 variable "nbde_tag" { default = "1.1.5" }
-
-################################################################
-### Fips Configuration
-################################################################
-variable "fips_compliant" {
-  type        = bool
-  description = "Set to true to enable usage of FIPS for the deployment."
-  default     = false
-}

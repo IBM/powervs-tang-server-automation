@@ -47,10 +47,10 @@ module "bastion" {
   source = "modules/1_bastion"
 
   # IBM Cloud
-  ibmcloud_api_key                = var.ibmcloud_api_key
-  service_instance_id             = var.service_instance_id
-  ibmcloud_region                 = var.ibmcloud_region
-  ibmcloud_zone                   = var.ibmcloud_zone
+  ibmcloud_api_key    = var.ibmcloud_api_key
+  service_instance_id = var.service_instance_id
+  ibmcloud_region     = var.ibmcloud_region
+  ibmcloud_zone       = var.ibmcloud_zone
 
   name_prefix                     = local.name_prefix
   cluster_domain                  = var.domain
@@ -73,25 +73,25 @@ module "bastion" {
   ansible_repo_name               = var.ansible_repo_name
   rhel_smt                        = var.rhel_smt
 
-  setup_squid_proxy               = var.setup_squid_proxy
-  proxy                           = var.proxy
+  setup_squid_proxy = var.setup_squid_proxy
+  proxy             = var.proxy
 }
 
 module "nbde" {
   source = "./modules/2_nbde"
 
   # Conditionally set bastion_public_ip or from bastion module if bastion was deployed
-  service_instance_id             = var.service_instance_id
-  processor_type                  = var.processor_type
-  system_type                     = var.system_type
-  network_name                    = var.network_name
-  domain                          = var.domain
-  name_prefix                     = local.name_prefix
+  service_instance_id = var.service_instance_id
+  processor_type      = var.processor_type
+  system_type         = var.system_type
+  network_name        = var.network_name
+  domain              = var.domain
+  name_prefix         = local.name_prefix
 
-  bastion_public_ip               = module.bastion.bastion_public_ip
-  rhel_username                   = var.rhel_username
-  private_key                     = local.private_key
-  ssh_agent                       = var.ssh_agent
+  bastion_public_ip = module.bastion.bastion_public_ip
+  rhel_username     = var.rhel_username
+  private_key       = local.private_key
+  ssh_agent         = var.ssh_agent
 }
 
 
@@ -100,24 +100,24 @@ module "fips" {
   source = "./modules/3_fips"
 
   # IBM Cloud
-  ibmcloud_api_key                = var.ibmcloud_api_key
-  service_instance_id             = var.service_instance_id
-  ibmcloud_region                 = var.ibmcloud_region
-  ibmcloud_zone                   = var.ibmcloud_zone
+  ibmcloud_api_key    = var.ibmcloud_api_key
+  service_instance_id = var.service_instance_id
+  ibmcloud_region     = var.ibmcloud_region
+  ibmcloud_zone       = var.ibmcloud_zone
 
   # Bastion
-  bastion_count                   = lookup(var.bastion, "count", 1)
-  bastion_instance_ids            = module.bastion.bastion_instance_ids
-  bastion_public_ip               = module.bastion.bastion_public_ip
+  bastion_count        = lookup(var.bastion, "count", 1)
+  bastion_instance_ids = module.bastion.bastion_instance_ids
+  bastion_public_ip    = module.bastion.bastion_public_ip
 
   # Tang
-  tang_count                      = lookup(var.tang, "count", 1)
-  tang_instance_ids               = module.nbde.tang_instance_ids
-  tang_public_ip                  = module.nbde.tang_ips
+  tang_count        = lookup(var.tang, "count", 1)
+  tang_instance_ids = module.nbde.tang_instance_ids
+  tang_public_ip    = module.nbde.tang_ips
 
   # conn
-  rhel_username                   = var.rhel_username
-  private_key                     = local.private_key
-  ssh_agent                       = var.ssh_agent
-  connection_timeout              = var.connection_timeout
+  rhel_username      = var.rhel_username
+  private_key        = local.private_key
+  ssh_agent          = var.ssh_agent
+  connection_timeout = var.connection_timeout
 }

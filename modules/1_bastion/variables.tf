@@ -83,7 +83,7 @@ variable "dns_forwarders" {
 }
 
 variable "name_prefix" {
-  default     = ""
+  default = ""
 }
 
 variable "bastion_health_status" {
@@ -128,11 +128,11 @@ variable "proxy" {
   type        = object({})
   description = "External Proxy server details in a map"
   default     = {
-    server = "",
-    port = ""
-    user = "",
+    server    = "",
+    port      = ""
+    user      = "",
     user_pass = ""
-    no_proxy = ""
+    no_proxy  = ""
   }
   #    default = {
   #        server = "10.10.1.166",
@@ -152,23 +152,23 @@ variable "rhel_username" {
 variable "public_key_file" {
   description = "Path to public key file"
   # if empty, will default to ${path.cwd}/data/id_rsa.pub
-  default = "data/id_rsa.pub"
+  default     = "data/id_rsa.pub"
 }
 
 variable "private_key_file" {
   description = "Path to private key file"
   # if empty, will default to ${path.cwd}/data/id_rsa
-  default = "data/id_rsa"
+  default     = "data/id_rsa"
 }
 
 variable "private_key" {
   description = "private key"
-  default = ""
+  default     = ""
 }
 
 variable "public_key" {
   description = "public key"
-  default = ""
+  default     = ""
 }
 
 variable "connection_timeout" {

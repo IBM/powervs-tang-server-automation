@@ -3,6 +3,7 @@
   gather_facts: yes
 
   tasks:
-    - name: Enable Fips Mode
+    - name: Enable FIPS Mode
+      become_user: root
       shell: |
-        sudo fips-mode-setup --enable
+        fips-mode-setup --enable

@@ -40,7 +40,7 @@ In order to retrieve the PowerVS region, zone and instance specific details plea
    Following are the region and zone mapping:
 
    | ibmcloud_region | ibmcloud_zone  |
-      |-----------------|----------------|
+         |-----------------|----------------|
    | eu-de           | eu-de-1        |
    | eu-de           | eu-de-2        |
    | dal             | dal12          |

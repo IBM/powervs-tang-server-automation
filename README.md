@@ -1,12 +1,12 @@
 # `powervs-tang-server-automation`
 
 The [`powervs-tang-server-automation` project](https://github.com/IBM/powervs-tang-server-automation) provides Terraform
-based automation code to help with the deployment of [Network Bound Disk Encryption (NBDE)](https://github.com/linux-system-roles/nbde_server)
-on [IBM® Power Systems™ Virtual Server on IBM Cloud](https://www.ibm.com/cloud/power-virtual-server). 
+based automation code to help with the deployment
+of [Network Bound Disk Encryption (NBDE)](https://github.com/linux-system-roles/nbde_server)
+on [IBM® Power Systems™ Virtual Server on IBM Cloud](https://www.ibm.com/cloud/power-virtual-server).
 
-The NBDE Server, also called the tang server, is deployed in a 3-node cluster with a single [bastion host](https://en.wikipedia.org/wiki/Bastion_host).
-
-Note, the server socket listens on port 7500.
+The NBDE Server, also called the tang server, is deployed in a 3-node cluster with a
+single [bastion host](https://en.wikipedia.org/wiki/Bastion_host). The tang server socket listens on port 7500.
 
 # Installation Quickstart
 
@@ -100,17 +100,19 @@ $ terraform destroy -var-file var.tfvars
 
 ### Backup
 
-Per [Red Hat](https://www.redhat.com/en/blog/advanced-automation-and-management-network-bound-disk-encryption-rhel-system-roles)'s blog, we've added the `nbde_server_fetch_keys: yes` This downloads the keys to the 'bastion host' and customers are expected to backup the keys using their operations processes.
+Per [Red Hat](https://www.redhat.com/en/blog/advanced-automation-and-management-network-bound-disk-encryption-rhel-system-roles)'
+s blog, we've added the `nbde_server_fetch_keys: yes` This downloads the keys to the 'bastion host' and customers are
+expected to backup the keys using their operations processes.
 
 ### Re-keying all NBDE servers
 
 1. Connect to your Bastion host
 2. Change directory to `nbde_server`
-`cd nbde_server`
+   `cd nbde_server`
 3. Run the playbook with the rotate keys variable
 
 ```terraform
-ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i inventory tasks/powervs-tang.yml -e nbde_server_rotate_keys=yes
+ANSIBLE_HOST_KEY_CHECKING = False ansible-playbook -i inventory tasks/powervs-tang.yml -e nbde_server_rotate_keys = yes
 ```
 
 ### Re-keying (Deleting) a single Tang server keys
@@ -130,12 +132,14 @@ ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i inventory tasks/powervs-tang
 5. Run the playbook with the rotate keys variable
 
 ```terraform
-ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i inventory tasks/powervs-tang.yml -e nbde_server_rotate_keys=yes
+ANSIBLE_HOST_KEY_CHECKING = False ansible-playbook -i inventory tasks/powervs-tang.yml -e nbde_server_rotate_keys = yes
 ```
 
 ## Automation Host Prerequisites
 
-The automation needs to run from a system with internet access. This could be your laptop or a VM with public internet connectivity. This automation code have been tested on the following Operating Systems:
+The automation needs to run from a system with internet access. This could be your laptop or a VM with public internet
+connectivity. This automation code have been tested on the following Operating Systems:
+
 - Mac OSX (Darwin)
 - Linux (x86_64/ppc64le)
 - Windows 10
@@ -152,9 +156,11 @@ Follow the [quickstart](docs/quickstart.md) guide for NBDE installation on Power
 
 ## Make It Better
 
-For bugs/enhancement requests etc. please open a GitHub [issue](https://github.com/ibm/powervs-tang-server-automation/issues)
+For bugs/enhancement requests etc. please open a
+GitHub [issue](https://github.com/ibm/powervs-tang-server-automation/issues)
 
 ## Contributing
+
 Please see the [contributing doc](CONTRIBUTING.md) for more details.
 
 PRs are most welcome !!

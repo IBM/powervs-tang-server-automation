@@ -103,25 +103,25 @@ variable "rhel_username" {
 variable "public_key_file" {
   description = "Path to public key file"
   # if empty, will default to ${path.cwd}/data/id_rsa.pub
-  default = "data/id_rsa.pub"
+  default     = "data/id_rsa.pub"
 }
 
 variable "private_key_file" {
   description = "Path to private key file"
   # if empty, will default to ${path.cwd}/data/id_rsa
-  default = "data/id_rsa"
+  default     = "data/id_rsa"
 }
 
 variable "private_key" {
   description = "content of private ssh key"
   # if empty string will read contents of file at var.private_key_file
-  default = ""
+  default     = ""
 }
 
 variable "public_key" {
   description = "Public key"
   # if empty string will read contents of file at var.public_key_file
-  default = ""
+  default     = ""
 }
 
 variable "rhel_subscription_username" {
@@ -258,9 +258,11 @@ variable "tang_count" {}
 ################################################################
 ### NBDE Server configuration
 ################################################################
-
 variable "nbde_repo" { default = "https://github.com/linux-system-roles/nbde_server" }
-variable "nbde_tag" { default = "1.1.5" }
+# sha instead of tag
+# 1.1.5 = 29a6726470df85a0abedfdef93e1cb17bb493131
+# 29a6726470df85a0abedfdef93e1cb17bb493131
+variable "nbde_tag" { default = "29a6726470df85a0abedfdef93e1cb17bb493131" }
 
 ################################################################
 ### Fips Configuration

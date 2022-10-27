@@ -1,15 +1,17 @@
 # Release Process
 
 The [`powervs-tang-server-automation` project](https://github.com/IBM/powervs-tang-server-automation) provides Terraform
-based automation code to help with the deployment of [Network Bound Disk Encryption (NBDE)](https://github.com/linux-system-roles/nbde_server)
-on [IBM® Power Systems™ Virtual Server on IBM Cloud](https://www.ibm.com/cloud/power-virtual-server). 
+based automation code to help with the deployment
+of [Network Bound Disk Encryption (NBDE)](https://github.com/linux-system-roles/nbde_server)
+on [IBM® Power Systems™ Virtual Server on IBM Cloud](https://www.ibm.com/cloud/power-virtual-server).
 
-The code uses Terraform with a combination of YAML, TF and other files to coordinate the provisioning and setup of the relevant infrastrucutre. 
+The code uses Terraform with a combination of YAML, TF and other files to coordinate the provisioning and setup of the
+relevant infrastrucutre.
 
-Once a release is identified, the following steps are taken. 
+Once a release is identified, the following steps are taken.
 
 1. Update to the latest `main` branch `git checkout main; git pull`
-2. Run [`terraform-docs`](https://github.com/terraform-docs/terraform-docs) and ensure it's cleanly presented. 
+2. Run [`terraform-docs`](https://github.com/terraform-docs/terraform-docs) and ensure it's cleanly presented.
 
 ```
 terraform-docs markdown table .
@@ -19,7 +21,7 @@ terraform-docs markdown table .
 4. Push tags `git push --tags`
 5. Update the Release Notes to indicate the changes made since the prior release.
 
-These should be selected from the commits: 
+These should be selected from the commits:
 
 ```
     feat: A new feature

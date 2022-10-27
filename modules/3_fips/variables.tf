@@ -48,14 +48,14 @@ variable "ibmcloud_zone" {
 variable "bastion_count" {}
 variable bastion_instance_ids {
   default = {
-    count      = 1
-    inst_ids     = ""
+    count    = 1
+    inst_ids = ""
   }
 }
 variable bastion_public_ip {
   default = {
-    count      = 1
-    ip         = ""
+    count = 1
+    ip    = ""
   }
 }
 
@@ -66,14 +66,14 @@ variable bastion_public_ip {
 variable "tang_count" {}
 variable tang_instance_ids {
   default = {
-    count      = 1
-    inst_ids     = ""
+    count    = 1
+    inst_ids = ""
   }
 }
 variable tang_ips {
   default = {
-    count      = 1
-    ip         = ""
+    count = 1
+    ip    = ""
   }
 }
 
@@ -85,8 +85,28 @@ variable "rhel_username" {
   default = "root"
 }
 
+variable "public_key_file" {
+  description = "Path to public key file"
+  # if empty, will default to ${path.cwd}/data/id_rsa.pub
+  default     = "data/id_rsa.pub"
+}
+
+variable "private_key_file" {
+  description = "Path to private key file"
+  # if empty, will default to ${path.cwd}/data/id_rsa
+  default     = "data/id_rsa"
+}
+
 variable "private_key" {
-  description = "private key"
+  description = "content of private ssh key"
+  # if empty string will read contents of file at var.private_key_file
+  default     = ""
+}
+
+variable "public_key" {
+  description = "Public key"
+  # if empty string will read contents of file at var.public_key_file
+  default     = ""
 }
 
 variable "connection_timeout" {

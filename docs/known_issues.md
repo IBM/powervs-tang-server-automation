@@ -1,5 +1,7 @@
 # Known Issues
-This page lists the known issues and potential next steps when deploying `tang` in Power Systems Virtual Server (PowerVS)
+
+This page lists the known issues and potential next steps when deploying `tang` in Power Systems Virtual Server (
+PowerVS)
 
 ## Terraform apply returns the following error
 
@@ -12,4 +14,5 @@ This page lists the known issues and potential next steps when deploying `tang` 
 
 - **Workaround**: Re-run TF again and if it doesn't help, destroy the TF resources and re-run.
 
-  If it doesn't work, then please open a support case with IBM Cloud to fix issue with reachability of public IP for PowerVS instance.
+  If it doesn't work, then please open a support case with IBM Cloud to fix issue with reachability of public IP for
+  PowerVS instance.

@@ -60,7 +60,7 @@ data "ibm_pi_image" "tang" {
 
 # Creates the Tang Servers
 resource "ibm_pi_instance" "tang" {
-  count                = var.tang.count
+  count = var.tang.count
 
   pi_memory            = var.tang["memory"]
   pi_processors        = var.tang["processors"]
@@ -72,7 +72,7 @@ resource "ibm_pi_instance" "tang" {
   pi_cloud_instance_id = var.service_instance_id
   pi_health_status     = var.tang_health_status
 
-  pi_storage_pool      = local.tang_storage_pool
+  pi_storage_pool = local.tang_storage_pool
 
   pi_network {
     network_id = var.bastion_network
@@ -125,8 +125,9 @@ resource "null_resource" "tang_install" {
       <<EOF
 rm -rf nbde_server
 echo 'Cloning into nbde_server...'
-git clone "${var.nbde_repo}" --single-branch --branch "${var.nbde_tag}"
+git clone "${var.nbde_repo}"
 cd nbde_server
+git checkout "${var.nbde_tag}"
 EOF
     ]
   }
@@ -134,32 +135,31 @@ EOF
   # Copy over the files into the existing playbook and ensures the names are unique
   provisioner "file" {
     source      = "${path.cwd}/templates/powervs-setup.yml"
-    destination = "nbde_server/tasks/powervs-setup.yml"
+    destination = "powervs-setup.yml"
   }
 
   provisioner "file" {
     source      = "${path.cwd}/templates/powervs-tang.yml"
-    destination = "nbde_server/tasks/powervs-tang.yml"
+    destination = "powervs-tang.yml"
   }
 
   provisioner "file" {
     source      = "${path.cwd}/templates/powervs-remove-subscription.yml"
-    destination = "nbde_server/tasks/powervs-remove-subscription.yml"
+    destination = "powervs-remove-subscription.yml"
   }
 
   provisioner "file" {
     content     = templatefile("${path.cwd}/templates/inventory", local.tang_inventory)
-    destination = "nbde_server/inventory"
+    destination = "inventory"
   }
 
   # Added quotes to avoid globbing issues in the extra-vars
   provisioner "remote-exec" {
-    when = create
+    when   = create
     inline = [
       <<EOF
 echo 'Running tang setup playbook...'
-cd nbde_server
-ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i inventory tasks/powervs-setup.yml --extra-vars username="${var.rhel_subscription_username}"\
+ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i inventory powervs-setup.yml --extra-vars username="${var.rhel_subscription_username}"\
   --extra-vars password="${var.rhel_subscription_password}"\
   --extra-vars bastion_ip="${var.bastion_ip}" \
   --extra-vars rhel_subscription_org="${var.rhel_subscription_org}" \
@@ -171,22 +171,20 @@ ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i inventory tasks/powervs-setu
   --extra-vars proxy_port="${local.proxy.port}" \
   --extra-vars no_proxy="${local.proxy.no_proxy}" \
   --extra-vars private_network_mtu="${var.private_network_mtu}"  \
-  --extra-vars domain="${var.domain}"  \
-  --extra-vars name_prefix="${var.name_prefix}"
+  --extra-vars domain="${var.domain}"
 
-ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i inventory tasks/powervs-tang.yml
+ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i inventory powervs-tang.yml
 EOF
     ]
   }
 
   # destroy optimistically destroys the subscription (if it fails, and it can it pipes to true to shortcircuit)
   provisioner "remote-exec" {
-    when = destroy
+    when       = destroy
     on_failure = continue
-    inline = [
+    inline     = [
       <<EOF
-cd nbde_server
-ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i inventory tasks/powervs-remove-subscription.yml
+ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i inventory powervs-remove-subscription.yml
 EOF
     ]
   }
@@ -217,11 +215,11 @@ resource "null_resource" "tang_allnodes" {
   }
 
   provisioner "remote-exec" {
-    when = create
+    when   = create
     inline = [
       <<EOF
-echo "=All Nodes Text="
-cat '/root/nbde_server/keys/*'
+echo "=All NBDE Server jwk keys="
+find nbde_server/keys/ -type f
 EOF
     ]
   }

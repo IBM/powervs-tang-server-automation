@@ -5,15 +5,16 @@
   tasks:
     - name: Add route to Bastion server
       become_user: root
+      ignore_errors: yes
       command: route add -net 0.0.0.0/0 gw "{{bastion_ip}}" env2
 
     - name: Initialize Host and Networking
       become_user: root
       shell: |
-        chmod 600 .ssh/id_rsa*
+        echo TMP_HST=$(hostname --long)
         sed -i.bak -e 's/^ - set_hostname/# - set_hostname/' -e 's/^ - update_hostname/# - update_hostname/' /etc/cloud/cloud.cfg
-        hostnamectl set-hostname --static {{name_prefix|lower}}-tang-${count.index}.{{domain}}
-        echo 'HOSTNAME={{name_prefix|lower}}-tang-${count.index}.{{domain}}' | sudo tee -a /etc/sysconfig/network > /dev/null
+        hostnamectl set-hostname --static ${TMP_HST}.{{domain}}
+        echo 'HOSTNAME=${TMP_HST}.{{domain}}' | sudo tee -a /etc/sysconfig/network > /dev/null
         hostname -F /etc/hostname
         echo 'vm.max_map_count = 262144' | sudo tee --append /etc/sysctl.conf > /dev/null
 
@@ -56,7 +57,7 @@
       become_user: root
       shell: |
         os=$(cat /etc/os-release | egrep "^ID=" | awk -F'"' '{print $2}')
-        if [[ $os != "rhel" ]]
+        if [[ "$os" == "rhel" ]]
         then
           # Give some more time to subscription-manager
           subscription-manager config --server.server_timeout=600
@@ -72,6 +73,7 @@
 
     - name: Add EPEL Repository
       become_user: root
+      warn: false
       shell: |
         # Additional repo for installing ansible package
         if ( [[ -z "{{username}}" ]] || [[ "{{username}}" == "<subscription-id>" ]] ) && [[ -z "{{rhel_subscription_org}}" ]]; then
@@ -88,22 +90,26 @@
 
     - name: Install Supporting Packages
       become_user: root
+      warn: false
       shell: |
         yum update -y --skip-broken
         yum install -y wget jq git net-tools vim python3 tar
 
     - name: Install Ansible
       become_user: root
+      warn: false
       shell: |
         yum install -y 'ansible-2.9.*'
 
     - name: Enable Reliable Scalable Cluster Technology (RSCT)
       become_user: root
+      warn: false
       shell: |
         yum install -y rsct.basic.ppc64le rsct.core.ppc64le rsct.core.utils.ppc64le rsct.opt.storagerm.ppc64le
 
     - name: Remove Cloud Init
       become_user: root
+      warn: false
       shell: |
         yum remove cloud-init --noautoremove -y
 

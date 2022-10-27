@@ -13,11 +13,11 @@
     nbde_server_rotate_keys: no
 
   roles:
-    - linux-system-roles.nbde_server
+    - nbde_server
   tasks:
     - name: Print nbde server thumbprint
       shell: |
-        tang-show-keys 7500 >> tmp.txt
+        tang-show-keys {{vars.nbde_server_port}} >> tmp.txt
         export ip=$(hostname -I)
         echo " is key of this ip: `echo $ip | awk '{print $1}'` " >> tmp.txt
     - name: Fetch source list from clients

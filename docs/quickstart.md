@@ -47,5 +47,7 @@ $ cat /root/tang-keys/allnodes.txt
 Destroy the Tang Cluster
 
 ```
-$ terraform apply -var-file var.tfvars
+$ terraform destroy -var-file var.tfvars
 ```
+
+If you encounter errors - use `TF_LOG=debug <COMMAND>`

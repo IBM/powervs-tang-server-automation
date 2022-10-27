@@ -24,19 +24,29 @@ provider "ibm" {
   zone             = var.ibmcloud_zone
 }
 
+locals {
+  private_key_file = var.private_key_file == "" ? "${path.cwd}/data/id_rsa" : "${path.cwd}/${var.private_key_file}"
+  public_key_file  = var.public_key_file == "" ? "${path.cwd}/data/id_rsa.pub" : "${path.cwd}/${var.public_key_file}"
+  private_key      = var.private_key == "" ? file(coalesce(local.private_key_file, "/dev/null")) : var.private_key
+  public_key       = var.public_key == "" ? file(coalesce(local.public_key_file, "/dev/null")) : var.public_key
+
+
+  ips             = split(",", var.tang_ips)
+}
+
 ################################################################
 # For the tang instances, the final steps are:
 # 1. Enable fips on the tang servers
 # 2. Reboot the tang instances to enable fips
 
 resource "null_resource" "tang_fips_enable" {
-  count      = 1
+  count = 1
 
   connection {
     type        = "ssh"
     user        = var.rhel_username
     host        = var.bastion_public_ip[count.index]
-    private_key = var.private_key
+    private_key = local.private_key
     agent       = var.ssh_agent
     timeout     = "${var.connection_timeout}m"
   }
@@ -44,26 +54,27 @@ resource "null_resource" "tang_fips_enable" {
   provisioner "remote-exec" {
     inline = [
       <<EOF
-mkdir -p fips/tasks/
+mkdir -p fips/
 EOF
     ]
   }
 
   provisioner "file" {
-    source      = "${path.cwd}/templates/enable-fips.yml"
-    destination = "fips/tasks/"
+    source      = "${path.cwd}/templates/fips.yml"
+    destination = "fips/fips.yml"
   }
 
   provisioner "file" {
-    content     = templatefile("${path.cwd}/templates/inventory", var.tang_ips.ip)
+    content     = templatefile("${path.cwd}/templates/inventory", {tang_hosts = local.ips})
     destination = "fips/inventory"
   }
 
   provisioner "remote-exec" {
     inline = [
       <<EOF
-echo 'Running enable-fips playbook'
-ANSIBLE_HOST_KEY_CHECKING=False && ansible-playbook -i fips/inventory fips.yml
+echo 'Running fips enablement playbook'
+cd fips
+ANSIBLE_HOST_KEY_CHECKING=False && ansible-playbook -i inventory fips.yml
 EOF
     ]
   }
@@ -73,11 +84,11 @@ resource "ibm_pi_instance_action" "tang_fips_reboot" {
   depends_on = [
     null_resource.tang_fips_enable
   ]
-  count                = var.tang_instance_ids.count
+  count                = length(var.tang_instance_ids)
   pi_cloud_instance_id = var.service_instance_id
 
   # Example: 99999-AA-5554-333-0e1248fa30c6/10111-b114-4d11-b2224-59999ab
-  pi_instance_id = var.tang_instance_ids[count.index].inst_ids
+  pi_instance_id = split("/", var.tang_instance_ids[count.index])[1]
   pi_action      = "soft-reboot"
 }
 
@@ -89,13 +100,13 @@ resource "ibm_pi_instance_action" "tang_fips_reboot" {
 resource "null_resource" "bastion_fips_enable" {
   # If the bastion.count is zero, then we're skipping as the bastion
   # already exists
-  count      = var.bastion_count
+  count = var.bastion_count
 
   connection {
     type        = "ssh"
     user        = var.rhel_username
-    host        = var.bastion_public_ip
-    private_key = var.private_key
+    host        = var.bastion_public_ip[count.index]
+    private_key = local.private_key
     agent       = var.ssh_agent
     timeout     = "${var.connection_timeout}m"
   }
@@ -112,15 +123,16 @@ EOF
 resource "ibm_pi_instance_action" "bastion_fips_reboot" {
   # If the bastion.count is zero, then we're skipping as the bastion
   # already exists
-  count                = var.bastion_count
+  count = var.bastion_count
 
   depends_on = [
-    null_resource.bastion_fips_enable
+    null_resource.bastion_fips_enable,
+    ibm_pi_instance_action.tang_fips_reboot
   ]
 
   pi_cloud_instance_id = var.service_instance_id
 
   # Example: 99999-AA-5554-333-0e1248fa30c6/10111-b114-4d11-b2224-59999ab
-  pi_instance_id = var.bastion_instance_ids[count.index].inst_ids
+  pi_instance_id = var.bastion_instance_ids[count.index]
   pi_action      = "soft-reboot"
 }

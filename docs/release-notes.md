@@ -9,7 +9,8 @@
 5. Converted the tang infrastructure for PowerVS to modules
     - 1_bastion deploys the bastion
     - 2_nbde deploys the operating system and configures NBDE
-    - 3_fips configures fips on the operating system and reboots
+    - 3_fips configures fips on the operating system and reboots 
+    - uses terraform ibm powervs [link](https://registry.terraform.io/providers/IBM-Cloud/ibm/latest/docs/data-sources/pi_instance_ip#external_ip)
 6. Support for operating systems:
     - Centos 8.6,9.0
     - Red Hat Linux Enterprise 8.6, 9.0
@@ -29,4 +30,5 @@
    - Changed `nbde_server_manage_firewall` to manage firewall 
    - Added support for rekeying and fetching
    - Use non-test path for automation
+   - Changed relative paths used for the ansible automation
 

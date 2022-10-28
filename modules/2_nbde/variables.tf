@@ -24,7 +24,6 @@ variable "service_instance_id" {
 }
 
 # From the Bastion Setup
-variable "bastion_network" {}
 variable "bastion_ip" {}
 variable "bastion_public_ip" { type = string }
 

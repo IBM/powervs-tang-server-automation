@@ -19,7 +19,7 @@
 ################################################################
 
 output "tang_ips" {
-  value = join(",", data.ibm_pi_instance_ip.tang_ip.*.ip)
+  value = local.tang_hosts
 }
 
 output "tang_instance_ids" {

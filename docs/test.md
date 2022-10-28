@@ -50,10 +50,8 @@ bastion_public_ip = [
 
     1. Setup the `var.tfvars` file per the `modules/2_nbde/variables.tf`
     2. Add vars:
-        1. `bastion_instance_ids`
         2. `bastion_ip`
         3. `bastion_public_ip`
-        4. `bastion_network`
     3. Create a temporary `versions.tf` file in the module
     4. Run the following commands:
         1. `terraform init`

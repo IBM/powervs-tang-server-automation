@@ -20,7 +20,6 @@
 
 locals {
   private_key = var.private_key
-  ips         = split(",", var.tang_ips)
 }
 
 ################################################################
@@ -49,18 +48,16 @@ EOF
   }
 
   provisioner "file" {
-    source      = "${path.cwd}/templates/fips.yml"
+    source      = "${path.cwd}/files/fips.yml"
     destination = "fips/fips.yml"
-  }
-
-  provisioner "file" {
-    content     = templatefile("${path.cwd}/modules/3_fips/templates/inventory", { tang_hosts = local.ips })
-    destination = "fips/inventory"
   }
 
   provisioner "remote-exec" {
     inline = [
       <<EOF
+echo "Hosts: ${var.tang_ips}"
+echo "[vmhost],${var.tang_ips}" | tr "," "\n\t" > inventory
+
 echo 'Running fips enablement playbook'
 cd fips
 ANSIBLE_HOST_KEY_CHECKING=False && ansible-playbook -i inventory fips.yml

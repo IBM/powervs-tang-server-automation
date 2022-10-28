@@ -73,10 +73,10 @@
 
     - name: Add EPEL Repository
       become_user: root
-      warn: false
       shell: |
         # Additional repo for installing ansible package
-        if ( [[ -z "{{username}}" ]] || [[ "{{username}}" == "<subscription-id>" ]] ) && [[ -z "{{rhel_subscription_org}}" ]]; then
+        if ( [[ -z "{{username}}" ]] || [[ "{{username}}" == "<subscription-id>" ]] ) && [[ -z "{{rhel_subscription_org}}" ]]
+        then
           yum install -y epel-release
         else
           # Setup RHEL9 subscription
@@ -90,20 +90,17 @@
 
     - name: Install Supporting Packages
       become_user: root
-      warn: false
       shell: |
         yum update -y --skip-broken
         yum install -y wget jq git net-tools vim python3 tar
 
     - name: Install Ansible
       become_user: root
-      warn: false
       shell: |
         yum install -y 'ansible-2.9.*'
 
     - name: Enable Reliable Scalable Cluster Technology (RSCT)
       become_user: root
-      warn: false
       shell: |
         yum install -y rsct.basic.ppc64le rsct.core.ppc64le rsct.core.utils.ppc64le rsct.opt.storagerm.ppc64le
 

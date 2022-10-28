@@ -49,6 +49,11 @@ data "ibm_pi_image" "tang" {
   pi_cloud_instance_id = var.service_instance_id
 }
 
+data "ibm_pi_network" "network" {
+  pi_network_name      = var.network_name
+  pi_cloud_instance_id = var.service_instance_id
+}
+
 # Creates the Tang Servers
 resource "ibm_pi_instance" "tang" {
   count = var.tang.count
@@ -66,24 +71,14 @@ resource "ibm_pi_instance" "tang" {
   pi_storage_pool = local.tang_storage_pool
 
   pi_network {
-    network_id = var.bastion_network
+    network_id = data.ibm_pi_network.network.id
   }
 }
 
-data "ibm_pi_instance_ip" "tang_ip" {
-  count      = var.tang.count
-  depends_on = [ibm_pi_instance.tang]
-
-  pi_instance_name     = ibm_pi_instance.tang[count.index].pi_instance_name
-  pi_network_name      = var.bastion_network
-  pi_cloud_instance_id = var.service_instance_id
-}
-
+# Extract the instance's IP addresses
+# see https://registry.terraform.io/providers/IBM-Cloud/ibm/latest/docs/resources/pi_instance
 locals {
-  tang_inventory = {
-    rhel_username = var.rhel_username
-    tang_hosts    = data.ibm_pi_instance_ip.tang_ip.*.ip
-  }
+  tang_hosts    = join(",", [for ts in ibm_pi_instance.tang : ts.pi_network[0].ip_address ])
 }
 
 resource "null_resource" "tang_install" {
@@ -125,23 +120,18 @@ EOF
 
   # Copy over the files into the existing playbook and ensures the names are unique
   provisioner "file" {
-    source      = "${path.cwd}/modules/2_nbde/templates/powervs-setup.yml"
+    source      = "${path.cwd}/modules/2_nbde/files/powervs-setup.yml"
     destination = "powervs-setup.yml"
   }
 
   provisioner "file" {
-    source      = "${path.cwd}/modules/2_nbde/templates/powervs-tang.yml"
+    source      = "${path.cwd}/modules/2_nbde/files/powervs-tang.yml"
     destination = "powervs-tang.yml"
   }
 
   provisioner "file" {
-    source      = "${path.cwd}/modules/2_nbde/templates/powervs-remove-subscription.yml"
+    source      = "${path.cwd}/modules/2_nbde/files/powervs-remove-subscription.yml"
     destination = "powervs-remove-subscription.yml"
-  }
-
-  provisioner "file" {
-    content     = templatefile("${path.cwd}/modules/2_nbde/templates/inventory", local.tang_inventory)
-    destination = "inventory"
   }
 
   # Added quotes to avoid globbing issues in the extra-vars
@@ -149,10 +139,13 @@ EOF
     when = create
     inline = [
       <<EOF
+echo "Hosts: ${local.tang_hosts}"
+echo "[vmhost],${local.tang_hosts}" | tr "," "\n\t" > inventory
+
 echo 'Running tang setup playbook...'
 ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i inventory powervs-setup.yml --extra-vars username="${var.rhel_subscription_username}"\
   --extra-vars password="${var.rhel_subscription_password}"\
-  --extra-vars bastion_ip="${var.bastion_ip}" \
+  --extra-vars bastion_ip="${var.bastion_ip[0]}" \
   --extra-vars rhel_subscription_org="${var.rhel_subscription_org}" \
   --extra-vars ansible_repo_name="${var.ansible_repo_name}" \
   --extra-vars rhel_subscription_activationkey="${var.rhel_subscription_activationkey}" \

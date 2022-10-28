@@ -1,4 +1,0 @@
-[vmhost]
-%{ for ip in tang_hosts ~}
-${ip}
-%{ endfor ~}

@@ -99,8 +99,7 @@ module "nbde" {
   service_instance_id = var.service_instance_id
 
   # From Bastion
-  bastion_network   = local.bastion_network
-  bastion_ip        = local.bastion_public_ip
+  bastion_ip        = local.bastion_ip
   bastion_public_ip = local.bastion_public_ip
 
   # Tang Setup

@@ -18,33 +18,14 @@
 #
 ################################################################
 
-################################################################
-# Configure IBM Cloud
-################################################################
-variable "ibmcloud_api_key" {
-  description = "IBM Cloud API key associated with user's identity"
-  default     = "<key>"
-}
-
 variable "service_instance_id" {
   description = "The cloud instance ID of your account"
-  default     = ""
-}
-
-variable "ibmcloud_region" {
-  description = "The IBM Cloud region where you want to create the resources"
-  default     = ""
-}
-
-variable "ibmcloud_zone" {
-  description = "The zone of an IBM Cloud region where you want to create Power System resources"
   default     = ""
 }
 
 ################################################################
 # Configure the Bastion Instance details
 ################################################################
-
 variable "bastion" {
   # only one node is supported
   default = {
@@ -173,7 +154,7 @@ variable "public_key" {
 
 variable "connection_timeout" {
   description = "Timeout in minutes for SSH connections"
-  default     = 5
+  default     = 15
 }
 
 variable "ssh_agent" {

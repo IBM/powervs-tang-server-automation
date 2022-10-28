@@ -18,18 +18,11 @@
 #
 ################################################################
 
-provider "ibm" {
-  ibmcloud_api_key = var.ibmcloud_api_key
-  region           = var.ibmcloud_region
-  zone             = var.ibmcloud_zone
-}
-
 locals {
   private_key_file = var.private_key_file == "" ? "${path.cwd}/data/id_rsa" : "${path.cwd}/${var.private_key_file}"
   public_key_file  = var.public_key_file == "" ? "${path.cwd}/data/id_rsa.pub" : "${path.cwd}/${var.public_key_file}"
   private_key      = var.private_key == "" ? file(coalesce(local.private_key_file, "/dev/null")) : var.private_key
   public_key       = var.public_key == "" ? file(coalesce(local.public_key_file, "/dev/null")) : var.public_key
-
 
   ips             = split(",", var.tang_ips)
 }

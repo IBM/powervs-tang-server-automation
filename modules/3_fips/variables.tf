@@ -71,10 +71,7 @@ variable tang_instance_ids {
   }
 }
 variable tang_ips {
-  default = {
-    count = 1
-    ip    = ""
-  }
+  default = ""
 }
 
 ################################################################

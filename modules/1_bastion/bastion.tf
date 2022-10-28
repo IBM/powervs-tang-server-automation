@@ -18,12 +18,6 @@
 #
 ################################################################
 
-provider "ibm" {
-  ibmcloud_api_key = var.ibmcloud_api_key
-  region           = var.ibmcloud_region
-  zone             = var.ibmcloud_zone
-}
-
 locals {
   private_key_file = var.private_key_file == "" ? "${path.cwd}/data/id_rsa" : "${path.cwd}/${var.private_key_file}"
   public_key_file  = var.public_key_file == "" ? "${path.cwd}/data/id_rsa.pub" : "${path.cwd}/${var.public_key_file}"
@@ -388,7 +382,7 @@ EOF
 
   # destroy optimistically destroys the subscription (if it fails, and it can it pipes to true to shortcircuit)
   provisioner "remote-exec" {
-    when       = "destroy"
+    when       = destroy
     on_failure = continue
 
     inline = [

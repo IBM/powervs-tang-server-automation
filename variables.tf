@@ -205,11 +205,10 @@ variable "domain" {
   description = "Domain name to use to setup the cluster. A DNS Forward Zone should be a registered in IBM Cloud if use_ibm_cloud_services = true"
 
   validation {
-    condition     = can(regex("^[a-z0-9]+[a-zA-Z0-9_\\-.]*[a-z0-9]+$", var.cluster_domain))
-    error_message = "The cluster_domain value must be a lower case alphanumeric characters, '-' or '.', and must start and end with an alphanumeric character."
+    condition     = can(regex("^[a-z0-9]+[a-zA-Z0-9_\\-.]*[a-z0-9]+$", var.domain))
+    error_message = "The domain value must be a lower case alphanumeric characters, '-' or '.', and must start and end with an alphanumeric character."
   }
 }
-
 
 variable "name_prefix" {
   type = string
@@ -252,8 +251,9 @@ variable "ansible_repo_name" {
   default = "ansible-2.9-for-rhel-8-ppc64le-rpms"
 }
 
-variable "tang_health_status" {}
-variable "tang_count" {}
+variable "tang_health_status" {
+  default = "WARNING"
+}
 
 ################################################################
 ### NBDE Server configuration
@@ -261,7 +261,6 @@ variable "tang_count" {}
 variable "nbde_repo" { default = "https://github.com/linux-system-roles/nbde_server" }
 # sha instead of tag
 # 1.1.5 = 29a6726470df85a0abedfdef93e1cb17bb493131
-# 29a6726470df85a0abedfdef93e1cb17bb493131
 variable "nbde_tag" { default = "29a6726470df85a0abedfdef93e1cb17bb493131" }
 
 ################################################################

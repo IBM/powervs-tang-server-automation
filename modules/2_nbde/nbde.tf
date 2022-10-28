@@ -78,7 +78,7 @@ resource "ibm_pi_instance" "tang" {
 # Extract the instance's IP addresses
 # see https://registry.terraform.io/providers/IBM-Cloud/ibm/latest/docs/resources/pi_instance
 locals {
-  tang_hosts    = join(",", [for ts in ibm_pi_instance.tang : ts.pi_network[0].ip_address ])
+  tang_hosts = join(",", [for ts in ibm_pi_instance.tang : ts.pi_network[0].ip_address])
 }
 
 resource "null_resource" "tang_install" {

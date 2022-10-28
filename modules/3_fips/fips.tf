@@ -19,11 +19,7 @@
 ################################################################
 
 locals {
-  private_key_file = var.private_key_file == "" ? "${path.cwd}/data/id_rsa" : "${path.cwd}/${var.private_key_file}"
-  public_key_file  = var.public_key_file == "" ? "${path.cwd}/data/id_rsa.pub" : "${path.cwd}/${var.public_key_file}"
-  private_key      = var.private_key == "" ? file(coalesce(local.private_key_file, "/dev/null")) : var.private_key
-  public_key       = var.public_key == "" ? file(coalesce(local.public_key_file, "/dev/null")) : var.public_key
-
+  private_key      = var.private_key
   ips = split(",", var.tang_ips)
 }
 
@@ -58,7 +54,7 @@ EOF
   }
 
   provisioner "file" {
-    content     = templatefile("${path.cwd}/templates/inventory", { tang_hosts = local.ips })
+    content     = templatefile("${path.cwd}/modules/3_fips/templates/inventory", { tang_hosts = local.ips })
     destination = "fips/inventory"
   }
 

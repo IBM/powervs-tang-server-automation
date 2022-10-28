@@ -19,10 +19,7 @@
 ################################################################
 
 locals {
-  private_key_file = var.private_key_file == "" ? "${path.cwd}/data/id_rsa" : "${path.cwd}/${var.private_key_file}"
-  public_key_file  = var.public_key_file == "" ? "${path.cwd}/data/id_rsa.pub" : "${path.cwd}/${var.public_key_file}"
-  private_key      = var.private_key == "" ? file(coalesce(local.private_key_file, "/dev/null")) : var.private_key
-  public_key       = var.public_key == "" ? file(coalesce(local.public_key_file, "/dev/null")) : var.public_key
+  private_key      = var.private_key
 
   proxy = {
     server    = lookup(var.proxy, "server", ""),
@@ -128,22 +125,22 @@ EOF
 
   # Copy over the files into the existing playbook and ensures the names are unique
   provisioner "file" {
-    source      = "${path.cwd}/templates/powervs-setup.yml"
+    source      = "${path.cwd}/modules/2_nbde/templates/powervs-setup.yml"
     destination = "powervs-setup.yml"
   }
 
   provisioner "file" {
-    source      = "${path.cwd}/templates/powervs-tang.yml"
+    source      = "${path.cwd}/modules/2_nbde/templates/powervs-tang.yml"
     destination = "powervs-tang.yml"
   }
 
   provisioner "file" {
-    source      = "${path.cwd}/templates/powervs-remove-subscription.yml"
+    source      = "${path.cwd}/modules/2_nbde/templates/powervs-remove-subscription.yml"
     destination = "powervs-remove-subscription.yml"
   }
 
   provisioner "file" {
-    content     = templatefile("${path.cwd}/templates/inventory", local.tang_inventory)
+    content     = templatefile("${path.cwd}/modules/2_nbde/templates/inventory", local.tang_inventory)
     destination = "inventory"
   }
 

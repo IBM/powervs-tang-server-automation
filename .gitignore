@@ -32,3 +32,5 @@ override.tf.json
 
 # Terraform lock hcl
 .terraform.lock.hcl
+
+*.log

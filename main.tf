@@ -36,8 +36,11 @@ locals {
   name_prefix = var.name_prefix != "" ? random_id.label[0].hex : "${var.name_prefix}"
 
   # Private Key
-  private_key_file = var.private_key_file == "" ? "${path.cwd}/data/id_rsa" : var.private_key_file
+  private_key_file = var.private_key_file == "" ? "${path.cwd}/data/id_rsa" : "${path.cwd}/${var.private_key_file}"
   private_key      = var.private_key == "" ? file(coalesce(local.private_key_file, "/dev/null")) : var.private_key
+
+  public_key_file  = var.public_key_file == "" ? "${path.cwd}/data/id_rsa.pub" : "${path.cwd}/${var.public_key_file}"
+  public_key       = var.public_key == "" ? file(coalesce(local.public_key_file, "/dev/null")) : var.public_key
 }
 
 module "bastion" {
@@ -68,13 +71,21 @@ module "bastion" {
   setup_squid_proxy               = var.setup_squid_proxy
   proxy                           = var.proxy
   rhel_username                   = var.rhel_username
-  public_key_file                 = var.public_key_file
-  private_key_file                = var.private_key_file
-  private_key                     = var.private_key
-  public_key                      = var.public_key
+
+  private_key                     = local.private_key
+  public_key                      = local.public_key
   connection_timeout              = var.connection_timeout
   ssh_agent                       = var.ssh_agent
   private_network_mtu             = var.private_network_mtu
+}
+
+locals {
+  bastion_network   = module.bastion[0].bastion_network
+  bastion_ip        = module.bastion[0].bastion_ip
+
+  # Bastion Public IP is either from the vars file or from the prior module
+  bastion_public_ip = var.private_key == "" ? module.bastion[0].bastion_public_ip : var.bastion_public_ip
+  bastion_instance_ids = module.bastion[0].bastion_instance_ids
 }
 
 module "nbde" {
@@ -84,23 +95,48 @@ module "nbde" {
     ibm = ibm.ibm-cloud-powervs
   }
 
-  # Conditionally set bastion_public_ip or from bastion module if bastion was deployed
+  # Provider Details
   service_instance_id = var.service_instance_id
-  processor_type      = var.processor_type
-  system_type         = var.system_type
-  network_name        = var.network_name
-  domain              = var.domain
-  name_prefix         = local.name_prefix
 
-  bastion_network = module.bastion.bastion_network
-  bastion_ip      = module.bastion.bastion_public_ip
+  # From Bastion
+  bastion_network   = local.bastion_network
+  bastion_ip        = local.bastion_public_ip
+  bastion_public_ip = local.bastion_public_ip
 
-  bastion_public_ip = module.bastion.bastion_public_ip
-  rhel_username     = var.rhel_username
-  private_key       = local.private_key
-  ssh_agent         = var.ssh_agent
+  # Tang Setup
+  tang                            = var.tang
+  rhel_image_name                 = var.rhel_image_name
+  processor_type                  = var.processor_type
+  system_type                     = var.system_type
+  network_name                    = var.network_name
+  dns_forwarders                  = var.dns_forwarders
+  name_prefix                     = local.name_prefix
+  tang_health_status              = var.tang_health_status
+  ansible_repo_name               = var.ansible_repo_name
+  rhel_subscription_username      = var.rhel_subscription_username
+  rhel_subscription_password      = var.rhel_subscription_password
+  rhel_subscription_org           = var.rhel_subscription_org
+  rhel_subscription_activationkey = var.rhel_subscription_activationkey
+  domain                          = var.domain
+  rhel_smt                        = var.rhel_smt
+  setup_squid_proxy               = var.setup_squid_proxy
+  proxy                           = var.proxy
+  rhel_username                   = var.rhel_username
+
+  private_key                     = local.private_key
+  connection_timeout              = var.connection_timeout
+  ssh_agent                       = var.ssh_agent
+  private_network_mtu             = var.private_network_mtu
+
+  # NBDE repo/tag
+  nbde_repo = var.nbde_repo
+  nbde_tag  = var.nbde_tag
 }
 
+locals {
+  tang_instance_ids = module.nbde.tang_instance_ids
+  tang_ips          = module.nbde.tang_ips
+}
 
 module "fips" {
   count  = var.fips_compliant ? 1 : 0
@@ -111,22 +147,19 @@ module "fips" {
   }
 
   # IBM Cloud
-  ibmcloud_api_key    = var.ibmcloud_api_key
   service_instance_id = var.service_instance_id
-  ibmcloud_region     = var.ibmcloud_region
-  ibmcloud_zone       = var.ibmcloud_zone
 
   # Bastion
   bastion_count        = lookup(var.bastion, "count", 1)
-  bastion_instance_ids = module.bastion.bastion_instance_ids
-  bastion_public_ip    = module.bastion.bastion_public_ip
+  bastion_instance_ids = local.bastion_instance_ids
+  bastion_public_ip    = local.bastion_public_ip
 
   # Tang
   tang_count        = lookup(var.tang, "count", 1)
-  tang_instance_ids = module.nbde.tang_instance_ids
-  tang_ips          = module.nbde.tang_ips
+  tang_instance_ids = local.tang_instance_ids
+  tang_ips          = local.tang_ips
 
-  # conn
+  # RHEL
   rhel_username      = var.rhel_username
   private_key        = local.private_key
   ssh_agent          = var.ssh_agent

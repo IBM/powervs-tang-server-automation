@@ -18,36 +18,19 @@
 #
 ################################################################
 
-################################################################
-# Configure the IBM Cloud provider
-################################################################
-variable "ibmcloud_api_key" {
-  description = "IBM Cloud API key associated with user's identity"
-  default     = "<key>"
-}
-
 variable "service_instance_id" {
   description = "The cloud instance ID of your account"
   default     = ""
 }
 
-variable "ibmcloud_region" {
-  description = "The IBM Cloud region where you want to create the resources"
-  default     = ""
-}
-
-variable "ibmcloud_zone" {
-  description = "The zone of an IBM Cloud region where you want to create Power System resources"
-  default     = ""
-}
+# From the Bastion Setup
+variable "bastion_network" {}
+variable "bastion_ip" {}
+variable "bastion_public_ip" {  type = string}
 
 ################################################################
 # Configure the Instance details
 ################################################################
-variable "bastion_network" {}
-variable "bastion_ip" {}
-variable "bastion_public_ip" {}
-
 variable "tang" {
   # only three nodes are supported
   default = {
@@ -157,7 +140,6 @@ variable "proxy" {
   #    }
 }
 
-
 variable "cluster_id" {
   type    = string
   default = ""
@@ -173,11 +155,9 @@ variable "cluster_id" {
   }
 }
 
-
 variable "domain" {
   type = string
 }
-
 
 variable "name_prefix" {
   type = string

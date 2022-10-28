@@ -10,7 +10,7 @@ vm_id_prefix = "infra-tang-node"
 vm_id        = ""
 
 #cluster_id_prefix = "test-tang"
-name_prefix = "infra-node3"
+name_prefix = "infra-node4"
 
 ### This is default minimalistic config. For PowerVS processors are equal to entitled physical count
 ### So N processors == N physical core entitlements == ceil[N] vCPUs.
@@ -18,7 +18,7 @@ name_prefix = "infra-node3"
 ### Example 1.5 processors == 1.5 physical core entitlements == ceil[1.5] = 2 vCPU == 16 logical OS CPUs (SMT=8)
 ### Example 2 processors == 2 physical core entitlements == ceil[2] = 2 vCPU == 16 logical OS CPUs (SMT=8)
 bastion = { memory = "16", processors = "1", "count" = 1 }
-tang    = { memory = "16", processors = "1", "count" = 1 }
+tang    = { memory = "16", processors = "1", "count" = 3 }
 
 public_key = "****"
 

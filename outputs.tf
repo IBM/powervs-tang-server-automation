@@ -18,17 +18,6 @@
 #
 ################################################################
 
-output "bastion_ip" {
-  depends_on = [null_resource.bastion_init]
-  value      = data.ibm_pi_instance_ip.bastion_ip.*.ip
-}
-
 output "bastion_public_ip" {
-  depends_on = [null_resource.bastion_packages]
-  value      = data.ibm_pi_instance_ip.bastion_public_ip.*.external_ip
-  # value = data.ibm_pi_instance_ip.bastion_public_ip
-}
-
-output "tang_ip" {
-  value = join(",", data.ibm_pi_instance_ip.tang_ip.*.ip)
+  value      = module.bastion[*].bastion_public_ip
 }

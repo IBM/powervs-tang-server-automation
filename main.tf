@@ -49,32 +49,32 @@ module "bastion" {
     ibm = ibm.ibm-cloud-powervs
   }
 
-  service_instance_id = var.service_instance_id
-  bastion = var.bastion
-  rhel_image_name = var.rhel_image_name
-  processor_type = var.processor_type
-  system_type = var.system_type
-  network_name = var.network_name
-  dns_forwarders = var.dns_forwarders
-  name_prefix = local.name_prefix
-  bastion_health_status = var.bastion_health_status
-  ansible_repo_name = var.ansible_repo_name
-  rhel_subscription_username = var.rhel_subscription_username
-  rhel_subscription_password = var.rhel_subscription_password
-  rhel_subscription_org = var.rhel_subscription_org
+  service_instance_id             = var.service_instance_id
+  bastion                         = var.bastion
+  rhel_image_name                 = var.rhel_image_name
+  processor_type                  = var.processor_type
+  system_type                     = var.system_type
+  network_name                    = var.network_name
+  dns_forwarders                  = var.dns_forwarders
+  name_prefix                     = local.name_prefix
+  bastion_health_status           = var.bastion_health_status
+  ansible_repo_name               = var.ansible_repo_name
+  rhel_subscription_username      = var.rhel_subscription_username
+  rhel_subscription_password      = var.rhel_subscription_password
+  rhel_subscription_org           = var.rhel_subscription_org
   rhel_subscription_activationkey = var.rhel_subscription_activationkey
-  domain = var.domain
-  rhel_smt = var.rhel_smt
-  setup_squid_proxy = var.setup_squid_proxy
-  proxy = var.proxy
-  rhel_username = var.rhel_username
-  public_key_file = var.public_key_file
-  private_key_file = var.private_key_file
-  private_key = var.private_key
-  public_key = var.public_key
-  connection_timeout = var.connection_timeout
-  ssh_agent = var.ssh_agent
-  private_network_mtu = var.private_network_mtu
+  domain                          = var.domain
+  rhel_smt                        = var.rhel_smt
+  setup_squid_proxy               = var.setup_squid_proxy
+  proxy                           = var.proxy
+  rhel_username                   = var.rhel_username
+  public_key_file                 = var.public_key_file
+  private_key_file                = var.private_key_file
+  private_key                     = var.private_key
+  public_key                      = var.public_key
+  connection_timeout              = var.connection_timeout
+  ssh_agent                       = var.ssh_agent
+  private_network_mtu             = var.private_network_mtu
 }
 
 module "nbde" {
@@ -92,8 +92,8 @@ module "nbde" {
   domain              = var.domain
   name_prefix         = local.name_prefix
 
-  bastion_network      = module.bastion.bastion_network
-  bastion_ip    = module.bastion.bastion_public_ip
+  bastion_network = module.bastion.bastion_network
+  bastion_ip      = module.bastion.bastion_public_ip
 
   bastion_public_ip = module.bastion.bastion_public_ip
   rhel_username     = var.rhel_username
@@ -124,7 +124,7 @@ module "fips" {
   # Tang
   tang_count        = lookup(var.tang, "count", 1)
   tang_instance_ids = module.nbde.tang_instance_ids
-  tang_ips    = module.nbde.tang_ips
+  tang_ips          = module.nbde.tang_ips
 
   # conn
   rhel_username      = var.rhel_username

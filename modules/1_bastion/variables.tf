@@ -108,7 +108,7 @@ variable "setup_squid_proxy" {
 variable "proxy" {
   type        = object({})
   description = "External Proxy server details in a map"
-  default     = {
+  default = {
     server    = "",
     port      = ""
     user      = "",
@@ -133,13 +133,13 @@ variable "rhel_username" {
 variable "public_key_file" {
   description = "Path to public key file"
   # if empty, will default to ${path.cwd}/data/id_rsa.pub
-  default     = "data/id_rsa.pub"
+  default = "data/id_rsa.pub"
 }
 
 variable "private_key_file" {
   description = "Path to private key file"
   # if empty, will default to ${path.cwd}/data/id_rsa
-  default     = "data/id_rsa"
+  default = "data/id_rsa"
 }
 
 variable "private_key" {

@@ -29,7 +29,7 @@ terraform {
       version = "~> 3.4"
     }
     null = {
-      source = "hashicorp/null"
+      source  = "hashicorp/null"
       version = "3.2.0"
     }
   }

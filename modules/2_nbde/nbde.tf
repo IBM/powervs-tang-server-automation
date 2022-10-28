@@ -149,7 +149,7 @@ EOF
 
   # Added quotes to avoid globbing issues in the extra-vars
   provisioner "remote-exec" {
-    when   = create
+    when = create
     inline = [
       <<EOF
 echo 'Running tang setup playbook...'
@@ -176,7 +176,7 @@ EOF
   provisioner "remote-exec" {
     when       = destroy
     on_failure = continue
-    inline     = [
+    inline = [
       <<EOF
 ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i inventory powervs-remove-subscription.yml
 EOF
@@ -209,7 +209,7 @@ resource "null_resource" "tang_allnodes" {
   }
 
   provisioner "remote-exec" {
-    when   = create
+    when = create
     inline = [
       <<EOF
 echo "=All NBDE Server jwk keys="

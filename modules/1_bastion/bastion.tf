@@ -196,7 +196,7 @@ EOF
 resource "null_resource" "bastion_register" {
   count      = (var.rhel_subscription_username == "" || var.rhel_subscription_username == "<subscription-id>") && var.rhel_subscription_org == "" ? 0 : var.bastion.count
   depends_on = [null_resource.bastion_init, null_resource.setup_proxy_info]
-  triggers   = {
+  triggers = {
     external_ip        = data.ibm_pi_instance_ip.bastion_public_ip[count.index].external_ip
     rhel_username      = var.rhel_username
     private_key        = local.private_key
@@ -246,7 +246,7 @@ EOF
     }
     when       = destroy
     on_failure = continue
-    inline     = [
+    inline = [
       "sudo subscription-manager unregister",
       "sudo subscription-manager remove --all",
     ]
@@ -286,7 +286,7 @@ EOF
 }
 
 resource "null_resource" "bastion_packages" {
-  count      = var.bastion.count
+  count = var.bastion.count
   depends_on = [
     null_resource.bastion_init, null_resource.setup_proxy_info, null_resource.bastion_register,
     null_resource.enable_repos

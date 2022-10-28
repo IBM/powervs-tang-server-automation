@@ -145,7 +145,7 @@ echo "[vmhost],${local.tang_hosts}" | tr "," "\n\t" > inventory
 echo 'Running tang setup playbook...'
 ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i inventory powervs-setup.yml --extra-vars username="${var.rhel_subscription_username}"\
   --extra-vars password="${var.rhel_subscription_password}"\
-  --extra-vars bastion_ip="${var.bastion_ip[0]}" \
+  --extra-vars bastion_ip="$(ip a  | grep env3 -A3 | grep inet | grep -v inet6  | awk '{print $2}' | tr '/' ' ' | awk '{print $1}')" \
   --extra-vars rhel_subscription_org="${var.rhel_subscription_org}" \
   --extra-vars ansible_repo_name="${var.ansible_repo_name}" \
   --extra-vars rhel_subscription_activationkey="${var.rhel_subscription_activationkey}" \

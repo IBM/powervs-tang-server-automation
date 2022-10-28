@@ -6,7 +6,7 @@
     - name: Add route to Bastion server
       become_user: root
       ignore_errors: yes
-      command: route add -net 0.0.0.0/0 gw "{{bastion_ip}}" env2
+      command: route add -net 0.0.0.0/0 gw "{{bastion_ip}}"
 
     - name: Initialize Host and Networking
       become_user: root

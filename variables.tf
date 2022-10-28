@@ -212,7 +212,7 @@ variable "domain" {
 }
 
 variable "name_prefix" {
-  type = string
+  type    = string
   default = ""
 
   validation {

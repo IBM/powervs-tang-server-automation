@@ -39,8 +39,8 @@ locals {
   private_key_file = var.private_key_file == "" ? "${path.cwd}/data/id_rsa" : "${path.cwd}/${var.private_key_file}"
   private_key      = var.private_key == "" ? file(coalesce(local.private_key_file, "/dev/null")) : var.private_key
 
-  public_key_file  = var.public_key_file == "" ? "${path.cwd}/data/id_rsa.pub" : "${path.cwd}/${var.public_key_file}"
-  public_key       = var.public_key == "" ? file(coalesce(local.public_key_file, "/dev/null")) : var.public_key
+  public_key_file = var.public_key_file == "" ? "${path.cwd}/data/id_rsa.pub" : "${path.cwd}/${var.public_key_file}"
+  public_key      = var.public_key == "" ? file(coalesce(local.public_key_file, "/dev/null")) : var.public_key
 }
 
 module "bastion" {
@@ -72,19 +72,19 @@ module "bastion" {
   proxy                           = var.proxy
   rhel_username                   = var.rhel_username
 
-  private_key                     = local.private_key
-  public_key                      = local.public_key
-  connection_timeout              = var.connection_timeout
-  ssh_agent                       = var.ssh_agent
-  private_network_mtu             = var.private_network_mtu
+  private_key         = local.private_key
+  public_key          = local.public_key
+  connection_timeout  = var.connection_timeout
+  ssh_agent           = var.ssh_agent
+  private_network_mtu = var.private_network_mtu
 }
 
 locals {
-  bastion_network   = module.bastion[0].bastion_network
-  bastion_ip        = module.bastion[0].bastion_ip
+  bastion_network = module.bastion[0].bastion_network
+  bastion_ip      = module.bastion[0].bastion_ip
 
   # Bastion Public IP is either from the vars file or from the prior module
-  bastion_public_ip = var.private_key == "" ? module.bastion[0].bastion_public_ip : var.bastion_public_ip
+  bastion_public_ip    = var.private_key == "" ? module.bastion[0].bastion_public_ip : var.bastion_public_ip
   bastion_instance_ids = module.bastion[0].bastion_instance_ids
 }
 
@@ -123,10 +123,10 @@ module "nbde" {
   proxy                           = var.proxy
   rhel_username                   = var.rhel_username
 
-  private_key                     = local.private_key
-  connection_timeout              = var.connection_timeout
-  ssh_agent                       = var.ssh_agent
-  private_network_mtu             = var.private_network_mtu
+  private_key         = local.private_key
+  connection_timeout  = var.connection_timeout
+  ssh_agent           = var.ssh_agent
+  private_network_mtu = var.private_network_mtu
 
   # NBDE repo/tag
   nbde_repo = var.nbde_repo

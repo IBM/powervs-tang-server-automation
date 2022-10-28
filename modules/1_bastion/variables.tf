@@ -131,13 +131,13 @@ variable "rhel_username" {
 }
 
 variable "private_key" {
-  type = string
+  type        = string
   description = "private key"
   default     = ""
 }
 
 variable "public_key" {
-  type = string
+  type        = string
   description = "public key"
   default     = ""
 }

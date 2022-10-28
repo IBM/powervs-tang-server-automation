@@ -19,7 +19,7 @@
 ################################################################
 
 locals {
-  private_key      = var.private_key
+  private_key = var.private_key
 
   proxy = {
     server    = lookup(var.proxy, "server", ""),

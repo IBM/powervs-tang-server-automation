@@ -23,8 +23,8 @@ data "ibm_pi_catalog_images" "catalog_images" {
 }
 
 locals {
-  private_key      = var.private_key
-  public_key      = var.public_key
+  private_key           = var.private_key
+  public_key            = var.public_key
   catalog_bastion_image = [for x in data.ibm_pi_catalog_images.catalog_images.images : x if x.name == var.rhel_image_name]
   rhel_image_id         = length(local.catalog_bastion_image) == 0 ? data.ibm_pi_image.bastion[0].id : local.catalog_bastion_image[0].image_id
   bastion_storage_pool  = length(local.catalog_bastion_image) == 0 ? data.ibm_pi_image.bastion[0].storage_pool : local.catalog_bastion_image[0].storage_pool

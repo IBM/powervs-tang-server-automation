@@ -59,7 +59,7 @@ variable "bastion" {
 }
 
 variable "bastion_public_ip" {
-  type = string
+  type        = string
   description = "The bastion_public_ip is the IP used to deploy the NBDE servers when the bastion.count = 0, and uses a pre-existing bastion host"
   default     = ""
 }

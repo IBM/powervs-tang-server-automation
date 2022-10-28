@@ -19,8 +19,8 @@
 ################################################################
 
 locals {
-  private_key      = var.private_key
-  ips = split(",", var.tang_ips)
+  private_key = var.private_key
+  ips         = split(",", var.tang_ips)
 }
 
 ################################################################

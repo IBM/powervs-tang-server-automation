@@ -36,6 +36,7 @@ jobs:
       - name: Terraform Format
         run: terraform fmt -check -recursive
 
+      # Dev Note: Commented out as we don't include the data/id_rsa and data/id_rsa.pub
       # Generates an execution plan for Terraform
-      - name: Terraform Plan
-        run: terraform plan -input=false
+      # - name: Terraform Plan
+      #  run: terraform plan -input=false

@@ -213,6 +213,7 @@ variable "domain" {
 
 variable "name_prefix" {
   type = string
+  default = ""
 
   validation {
     condition     = length(var.name_prefix) <= 32

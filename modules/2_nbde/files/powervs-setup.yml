@@ -3,11 +3,6 @@
   gather_facts: yes
 
   tasks:
-    - name: Add route to Bastion server
-      become_user: root
-      ignore_errors: yes
-      command: route add -net 0.0.0.0/0 gw "{{bastion_ip}}"
-
     - name: Initialize Host and Networking
       become_user: root
       shell: |
@@ -24,6 +19,7 @@
           con_name=$(nmcli -t -f NAME connection show | grep $env)
           nmcli connection modify "$con_name" ethtool.feature-rx off
           nmcli connection modify "$con_name" ethernet.mtu {{private_network_mtu}}
+          nmcli connection modify "$con_name" ipv4.gateway {{bastion_ip}}
           nmcli connection up "$con_name"
         done
 
@@ -118,6 +114,17 @@
         for i in $(nmcli device | grep unmanaged | awk '{print $1}'); do echo NM_CONTROLLED=yes | sudo tee -a /etc/sysconfig/network-scripts/ifcfg-$i; done
         systemctl restart NetworkManager
         systemctl enable NetworkManager
+
+
+    - ansible.posix.firewalld:
+        port: 22/tcp
+        permanent: yes
+        state: enabled
+
+    - ansible.posix.firewalld:
+        port: 7500/tcp
+        permanent: yes
+        state: enabled
 
     - name: Cleanup Terraform
       become_user: root

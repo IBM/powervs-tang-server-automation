@@ -183,7 +183,6 @@ variable "proxy" {
   #    }
 }
 
-
 variable "cluster_id" {
   type    = string
   default = ""
@@ -198,7 +197,6 @@ variable "cluster_id" {
     error_message = "The cluster_id value shouldn't be greater than 14 characters."
   }
 }
-
 
 variable "domain" {
   type        = string
@@ -245,12 +243,12 @@ variable "setup_squid_proxy" {
 
 variable "rhel_subscription_activationkey" {
   type    = string
-  default = ""
+  default = "The subscription key for activating rhel"
 }
 
-
 variable "ansible_repo_name" {
-  default = "ansible-2.9-for-rhel-8-ppc64le-rpms"
+  default     = "ansible-2.9-for-rhel-8-ppc64le-rpms"
+  description = "The Ansible repository name"
 }
 
 variable "tang_health_status" {

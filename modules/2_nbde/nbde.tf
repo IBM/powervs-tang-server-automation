@@ -78,7 +78,7 @@ resource "ibm_pi_instance" "tang" {
 # Extract the instance's IP addresses
 # see https://registry.terraform.io/providers/IBM-Cloud/ibm/latest/docs/resources/pi_instance
 locals {
-  tang_hosts    = join(",", [for ts in ibm_pi_instance.tang : ts.pi_network[0].ip_address ])
+  tang_hosts = join(",", [for ts in ibm_pi_instance.tang : ts.pi_network[0].ip_address])
 }
 
 resource "null_resource" "tang_install" {
@@ -145,7 +145,7 @@ echo "[vmhost],${local.tang_hosts}" | tr "," "\n\t" > inventory
 echo 'Running tang setup playbook...'
 ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i inventory powervs-setup.yml --extra-vars username="${var.rhel_subscription_username}"\
   --extra-vars password="${var.rhel_subscription_password}"\
-  --extra-vars bastion_ip="${var.bastion_ip[0]}" \
+  --extra-vars bastion_ip="$(ip -4 -json addr show dev env3  | jq -r '.[].addr_info[].local')" \
   --extra-vars rhel_subscription_org="${var.rhel_subscription_org}" \
   --extra-vars ansible_repo_name="${var.ansible_repo_name}" \
   --extra-vars rhel_subscription_activationkey="${var.rhel_subscription_activationkey}" \
@@ -203,7 +203,7 @@ resource "null_resource" "tang_allnodes" {
     inline = [
       <<EOF
 echo "=All NBDE Server jwk keys="
-find nbde_server/keys/ -type f
+find /root/nbde_server/keys/ -type f
 EOF
     ]
   }

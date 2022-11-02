@@ -128,7 +128,7 @@ module "nbde" {
   private_network_mtu = var.private_network_mtu
 
   # NBDE tag
-  nbde_tag  = var.nbde_tag
+  nbde_tag = var.nbde_tag
 }
 
 locals {

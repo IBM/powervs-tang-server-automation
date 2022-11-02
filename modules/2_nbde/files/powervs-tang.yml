@@ -5,15 +5,17 @@
     nbde_server_fetch_keys: yes
     nbde_server_keys_dir: /root/nbde_server/keys
     # Port is changed from 80
-    nbde_server_manage_firewall: yes
     nbde_server_port: 7500
+    nbde_server_manage_selinux: yes
+    # the manage firewall is marked as yes
+    nbde_server_manage_firewall: yes
     # Per https://www.redhat.com/en/blog/advanced-automation-and-management-network-bound-disk-encryption-rhel-system-roles
     # -e nbde_server_rotate_keys=yes
     # will cause it rotate keys and return the values
     nbde_server_rotate_keys: no
 
   roles:
-    - nbde_server
+    - linux-system-roles.nbde_server
   tasks:
     - name: Print nbde server thumbprint
       shell: |

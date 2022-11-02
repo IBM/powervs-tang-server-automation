@@ -105,19 +105,6 @@ resource "null_resource" "tang_install" {
     timeout     = self.triggers.connection_timeout
   }
 
-  # If the bastion has an existing nbde_server folder, it erases, and clones a repo with a single branch (tag)
-  provisioner "remote-exec" {
-    inline = [
-      <<EOF
-rm -rf nbde_server
-echo 'Cloning into nbde_server...'
-git clone "${var.nbde_repo}"
-cd nbde_server
-git checkout "${var.nbde_tag}"
-EOF
-    ]
-  }
-
   # Copy over the files into the existing playbook and ensures the names are unique
   provisioner "file" {
     source      = "${path.cwd}/modules/2_nbde/files/powervs-setup.yml"
@@ -157,6 +144,9 @@ ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i inventory powervs-setup.yml 
   --extra-vars private_network_mtu="${var.private_network_mtu}"  \
   --extra-vars domain="${var.domain}"
 
+ansible-galaxy install linux-system-roles.nbde_server,v1.2.0
+# Lock in the system_roles
+ansible-galaxy collection install fedora.linux_system_roles:==1.29.0
 ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i inventory powervs-tang.yml
 EOF
     ]

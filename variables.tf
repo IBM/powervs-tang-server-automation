@@ -258,11 +258,10 @@ variable "tang_health_status" {
 ################################################################
 ### NBDE Server configuration
 ################################################################
-variable "nbde_repo" { default = "https://github.com/linux-system-roles/nbde_server" }
-# sha instead of tag
-# Prior  : 1.1.5 = 29a6726470df85a0abedfdef93e1cb17bb493131
-# Current: 1.2.0 = 4af63e910c782ca37c7d64cf34fa04ed89c2272f
-variable "nbde_tag" { default = "4af63e910c782ca37c7d64cf34fa04ed89c2272f" }
+# https://github.com/linux-system-roles/nbde_server
+# Prior  : 1.1.5
+# Current: 1.2.0
+variable "nbde_tag" { default = "v1.2.0" }
 
 ################################################################
 ### Fips Configuration

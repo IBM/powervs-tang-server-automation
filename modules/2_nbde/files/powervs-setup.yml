@@ -115,18 +115,15 @@
         systemctl restart NetworkManager
         systemctl enable NetworkManager
 
-
-    - ansible.posix.firewalld:
-        port: 22/tcp
-        permanent: yes
-        state: enabled
-
-    - ansible.posix.firewalld:
-        port: 7500/tcp
-        permanent: yes
-        state: enabled
-
-    - name: Cleanup Terraform
+    - name: Setup Firewall
       become_user: root
       shell: |
-        rm -rf /tmp/terraform_*
+        # 22/tcp 7500/tcp
+        yum install firewalld -y
+        systemctl unmask firewalld
+        systemctl start firewalld
+        systemctl enable firewalld
+        firewall-cmd --check-config
+        firewall-cmd --add-port=22/tcp
+        firewall-cmd --add-port=7500/tcp
+        firewall-cmd --state

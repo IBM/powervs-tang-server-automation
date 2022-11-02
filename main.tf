@@ -127,9 +127,8 @@ module "nbde" {
   ssh_agent           = var.ssh_agent
   private_network_mtu = var.private_network_mtu
 
-  # NBDE repo/tag
-  nbde_repo = var.nbde_repo
-  nbde_tag  = var.nbde_tag
+  # NBDE tag
+  nbde_tag = var.nbde_tag
 }
 
 locals {

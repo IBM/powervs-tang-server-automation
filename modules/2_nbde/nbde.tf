@@ -164,7 +164,7 @@ EOF
   }
 }
 
-resource "null_resource" "tang_allnodes" {
+resource "null_resource" "tang_report_details" {
   count = 1
 
   depends_on = [
@@ -193,7 +193,7 @@ resource "null_resource" "tang_allnodes" {
     inline = [
       <<EOF
 echo "=All NBDE Server jwk keys="
-find /root/nbde_server/keys/ -type f
+find /root/nbde_server/keys/ -type f || true
 EOF
     ]
   }

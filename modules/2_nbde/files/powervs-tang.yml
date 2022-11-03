@@ -14,9 +14,10 @@
     # will cause it rotate keys and return the values
     nbde_server_rotate_keys: no
 
-  roles:
-    - linux-system-roles.nbde_server
   tasks:
+    - name: Configure NBDE Server
+      include_role:
+        name: fedora.linux_system_roles.nbde_server
     - name: Print nbde server thumbprint
       shell: |
         tang-show-keys {{vars.nbde_server_port}} >> tmp.txt

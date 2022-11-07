@@ -6,16 +6,17 @@
     - name: Initialize Host and Networking
       become_user: root
       shell: |
-        echo TMP_HST=$(hostname --long)
+        echo TMP_HST=$(hostname -s)
         sed -i.bak -e 's/^ - set_hostname/# - set_hostname/' -e 's/^ - update_hostname/# - update_hostname/' /etc/cloud/cloud.cfg
         hostnamectl set-hostname --static ${TMP_HST}.{{domain}}
-        echo 'HOSTNAME=${TMP_HST}.{{domain}}' | sudo tee -a /etc/sysconfig/network > /dev/null
+        echo "HOSTNAME=${TMP_HST}.{{domain}}" | sudo tee -a /etc/sysconfig/network > /dev/null
         hostname -F /etc/hostname
         echo 'vm.max_map_count = 262144' | sudo tee --append /etc/sysctl.conf > /dev/null
 
-        # turn off rx and set mtu to private_network_mtu for all ineterfaces to improve network performance
-        envs=($(ip r | awk '{print $3}'))
-        for env in "${envs[@]}"; do
+        # turn off rx and set mtu to private_network_mtu for all interfaces to improve network performance
+        envs=($(ip route list scope link | awk '{print $3'}))
+        for env in "${envs[@]}"
+        do
           con_name=$(nmcli -t -f NAME connection show | grep $env)
           nmcli connection modify "$con_name" ethtool.feature-rx off
           nmcli connection modify "$con_name" ethernet.mtu {{private_network_mtu}}

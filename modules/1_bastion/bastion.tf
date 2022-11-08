@@ -302,7 +302,7 @@ resource "null_resource" "bastion_packages" {
       sudo yum install -y wget jq git net-tools vim python3 tar firewalld iptables
 
       os_ver=$(cat /etc/os-release | egrep "^VERSION_ID=" | awk -F'"' '{print $2}')
-      if [[ $os_ver != "9"* ]]
+      if [[ $os_ver == "9"* ]]
       then
         # version 9: uses firewalld and masquerade
         # https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/9/pdf/configuring_firewalls_and_packet_filters/red_hat_enterprise_linux-9-configuring_firewalls_and_packet_filters-en-us.pdf

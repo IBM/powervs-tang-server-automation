@@ -298,12 +298,28 @@ resource "null_resource" "bastion_packages" {
 
   provisioner "remote-exec" {
     inline = [
-      "#sudo yum update -y --skip-broken",
-      "sudo yum install -y wget iptables jq git net-tools vim python3 tar",
-      "iptables -A FORWARD -i env3 -j ACCEPT",
-      "iptables -A FORWARD -o env3 -j ACCEPT",
-      "iptables -t nat -A POSTROUTING -o env2 -j MASQUERADE",
-      "sysctl -w net.ipv4.ip_forward=1"
+      <<EOF
+      sudo yum install -y wget jq git net-tools vim python3 tar firewalld iptables
+
+      os_ver=$(cat /etc/os-release | egrep "^VERSION_ID=" | awk -F'"' '{print $2}')
+      if [[ $os_ver == "9"* ]]
+      then
+        # version 9: uses firewalld and masquerade
+        # https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/9/pdf/configuring_firewalls_and_packet_filters/red_hat_enterprise_linux-9-configuring_firewalls_and_packet_filters-en-us.pdf
+        yum install -y firewalld
+        systemctl start firewalld
+        systemctl enable firewalld --now
+        firewall-cmd --zone=public --change-interface=env2
+        firewall-cmd --zone=trusted --change-interface=env3
+        firewall-cmd --zone=public --add-masquerade
+      else
+        # version 8: uses iptables
+        iptables -A FORWARD -i env3 -j ACCEPT
+        iptables -A FORWARD -o env3 -j ACCEPT
+        iptables -t nat -A POSTROUTING -o env2 -j MASQUERADE
+        sysctl -w net.ipv4.ip_forward=1
+      fi
+EOF
     ]
   }
   provisioner "remote-exec" {

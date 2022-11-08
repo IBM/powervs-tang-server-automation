@@ -6,16 +6,17 @@
     - name: Initialize Host and Networking
       become_user: root
       shell: |
-        echo TMP_HST=$(hostname --long)
+        echo TMP_HST=$(hostname -s)
         sed -i.bak -e 's/^ - set_hostname/# - set_hostname/' -e 's/^ - update_hostname/# - update_hostname/' /etc/cloud/cloud.cfg
         hostnamectl set-hostname --static ${TMP_HST}.{{domain}}
-        echo 'HOSTNAME=${TMP_HST}.{{domain}}' | sudo tee -a /etc/sysconfig/network > /dev/null
+        echo "HOSTNAME=${TMP_HST}.{{domain}}" | sudo tee -a /etc/sysconfig/network > /dev/null
         hostname -F /etc/hostname
         echo 'vm.max_map_count = 262144' | sudo tee --append /etc/sysctl.conf > /dev/null
 
-        # turn off rx and set mtu to private_network_mtu for all ineterfaces to improve network performance
-        envs=($(ip r | awk '{print $3}'))
-        for env in "${envs[@]}"; do
+        # turn off rx and set mtu to private_network_mtu for all interfaces to improve network performance
+        envs=($(ip route list scope link | awk '{print $3'}))
+        for env in "${envs[@]}"
+        do
           con_name=$(nmcli -t -f NAME connection show | grep $env)
           nmcli connection modify "$con_name" ethtool.feature-rx off
           nmcli connection modify "$con_name" ethernet.mtu {{private_network_mtu}}
@@ -26,28 +27,31 @@
     - name: Setup Proxy Info
       become_user: root
       shell: |
-        echo "Setting up proxy details..."
-        # System
-        set http_proxy="http://{{proxy_user_pass}}{{proxy_server}}:"
-        set https_proxy="http://{{proxy_user_pass}}{{proxy_server}}:{{proxy_port}}"
-        set no_proxy="{{no_proxy}}"
-        echo "export http_proxy=\"http://{{proxy_user_pass}}{{proxy_server}}:{{proxy_port}}\"" | sudo tee /etc/profile.d/http_proxy.sh > /dev/null
-        echo "export https_proxy=\"http://{{proxy_user_pass}}{{proxy_server}}:{{proxy_port}}\"" | sudo tee -a /etc/profile.d/http_proxy.sh > /dev/null
-        echo "export no_proxy=\"{{no_proxy}}\"" | sudo tee -a /etc/profile.d/http_proxy.sh > /dev/null
+        if [ ! -z "{{proxy_server}}" ]
+        then
+          echo "Setting up proxy details..."
+          # System
+          set http_proxy="http://{{proxy_user_pass}}{{proxy_server}}:"
+          set https_proxy="http://{{proxy_user_pass}}{{proxy_server}}:{{proxy_port}}"
+          set no_proxy="{{no_proxy}}"
+          echo "export http_proxy=\"http://{{proxy_user_pass}}{{proxy_server}}:{{proxy_port}}\"" | sudo tee /etc/profile.d/http_proxy.sh > /dev/null
+          echo "export https_proxy=\"http://{{proxy_user_pass}}{{proxy_server}}:{{proxy_port}}\"" | sudo tee -a /etc/profile.d/http_proxy.sh > /dev/null
+          echo "export no_proxy=\"{{no_proxy}}\"" | sudo tee -a /etc/profile.d/http_proxy.sh > /dev/null
 
-        # RHSM
-        sed -i -e 's/^proxy_hostname =.*/proxy_hostname = {{proxy_server}}/' /etc/rhsm/rhsm.conf
-        sed -i -e 's/^proxy_port =.*/proxy_port = {{proxy_port}}/' /etc/rhsm/rhsm.conf
-        sed -i -e 's/^proxy_user =.*/proxy_user = {{proxy_user}}/' /etc/rhsm/rhsm.conf
-        sed -i -e 's/^proxy_password =.*/proxy_password = {{proxy_user_pass}}/' /etc/rhsm/rhsm.conf
-
-        # YUM/DNF
-        # Incase /etc/yum.conf is a symlink to /etc/dnf/dnf.conf we try to update the original file
-        yum_dnf_conf=$(readlink -f -q /etc/yum.conf)
-        sed -i -e '/^proxy.*/d' $yum_dnf_conf
-        echo "proxy=http://{{proxy_server}}:{{proxy_port}}" | sudo tee -a $yum_dnf_conf > /dev/null
-        echo "proxy_username={{proxy_user}}" | sudo tee -a $yum_dnf_conf > /dev/null
-        echo "proxy_password={{proxy_user_pass}}" | sudo tee -a $yum_dnf_conf > /dev/null
+          # RHSM
+          sed -i -e 's/^proxy_hostname =.*/proxy_hostname = {{proxy_server}}/' /etc/rhsm/rhsm.conf
+          sed -i -e 's/^proxy_port =.*/proxy_port = {{proxy_port}}/' /etc/rhsm/rhsm.conf
+          sed -i -e 's/^proxy_user =.*/proxy_user = {{proxy_user}}/' /etc/rhsm/rhsm.conf
+          sed -i -e 's/^proxy_password =.*/proxy_password = {{proxy_user_pass}}/' /etc/rhsm/rhsm.conf
+  
+          # YUM/DNF
+          # Incase /etc/yum.conf is a symlink to /etc/dnf/dnf.conf we try to update the original file
+          yum_dnf_conf=$(readlink -f -q /etc/yum.conf)
+          sed -i -e '/^proxy.*/d' $yum_dnf_conf
+          echo "proxy=http://{{proxy_server}}:{{proxy_port}}" | sudo tee -a $yum_dnf_conf > /dev/null
+          echo "proxy_username={{proxy_user}}" | sudo tee -a $yum_dnf_conf > /dev/null
+          echo "proxy_password={{proxy_user_pass}}" | sudo tee -a $yum_dnf_conf > /dev/null
+        fi 
 
     - name: Register with Red Hat Network
       become_user: root

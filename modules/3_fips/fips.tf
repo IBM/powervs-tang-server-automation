@@ -56,7 +56,7 @@ EOF
     inline = [
       <<EOF
 echo "Hosts: ${var.tang_ips}"
-echo "[vmhost],${var.tang_ips}" | tr "," "\n\t" > inventory
+echo "[vmhost],${var.tang_ips}" | tr "," "\n\t" > fips/inventory
 
 echo 'Running fips enablement playbook'
 cd fips

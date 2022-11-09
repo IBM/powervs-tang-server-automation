@@ -333,7 +333,17 @@ EOF
   }
   provisioner "remote-exec" {
     inline = [
-      "sudo yum install -y ansible-2.9.*"
+      <<EOF
+#Installing ansible package.
+ os_ver=$(cat /etc/os-release | egrep "^VERSION_ID=" | awk -F'"' '{print $2}')
+  if [[ $os_ver == "9"* ]]; then
+    sudo yum install -y ansible-core
+  elif [[ $os_ver == "8.*"* ]]; then
+    sudo yum install -y ansible-2.9.*
+  else
+    sudo yum install -y ansible
+  fi
+EOF
     ]
   }
 }

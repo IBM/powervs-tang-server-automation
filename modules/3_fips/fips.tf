@@ -48,7 +48,7 @@ EOF
   }
 
   provisioner "file" {
-    source      = "${path.cwd}/files/fips.yml"
+    source      = "${path.cwd}/modules/3_fips/files/fips.yml"
     destination = "fips/fips.yml"
   }
 

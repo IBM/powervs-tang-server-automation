@@ -33,7 +33,7 @@ resource "null_resource" "tang_fips_enable" {
   connection {
     type        = "ssh"
     user        = var.rhel_username
-    host        = var.bastion_public_ip[count.index]
+    host        = var.bastion_public_ip
     private_key = local.private_key
     agent       = var.ssh_agent
     timeout     = "${var.connection_timeout}m"
@@ -91,7 +91,7 @@ resource "null_resource" "bastion_fips_enable" {
   connection {
     type        = "ssh"
     user        = var.rhel_username
-    host        = var.bastion_public_ip[count.index]
+    host        = var.bastion_public_ip
     private_key = local.private_key
     agent       = var.ssh_agent
     timeout     = "${var.connection_timeout}m"
@@ -119,6 +119,6 @@ resource "ibm_pi_instance_action" "bastion_fips_reboot" {
   pi_cloud_instance_id = var.service_instance_id
 
   # Example: 99999-AA-5554-333-0e1248fa30c6/10111-b114-4d11-b2224-59999ab
-  pi_instance_id = var.bastion_instance_ids[count.index]
+  pi_instance_id = split("/", var.bastion_instance_ids[count.index])[1]
   pi_action      = "soft-reboot"
 }

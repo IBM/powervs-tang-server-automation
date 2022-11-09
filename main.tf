@@ -144,6 +144,11 @@ module "fips" {
     ibm = ibm.ibm-cloud-powervs
   }
 
+  depends_on = [
+    module.bastion,
+    module.nbde
+  ]
+
   # IBM Cloud
   service_instance_id = var.service_instance_id
 

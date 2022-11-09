@@ -52,12 +52,7 @@ variable "bastion_instance_ids" {
     inst_ids = ""
   }
 }
-variable "bastion_public_ip" {
-  default = {
-    count = 1
-    ip    = ""
-  }
-}
+variable "bastion_public_ip" { type = string }
 
 ################################################################
 # Configure the Tang Instance details

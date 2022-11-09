@@ -94,10 +94,6 @@
         yum update -y --skip-broken
         yum install -y wget jq git net-tools vim python3 tar
 
-    - name: Install Ansible
-      become_user: root
-      shell: |
-        yum install -y 'ansible-2.9.*'
 
     - name: Enable Reliable Scalable Cluster Technology (RSCT)
       become_user: root

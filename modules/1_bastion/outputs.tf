@@ -30,7 +30,7 @@ output "bastion_public_ip" {
 
 output "bastion_instance_ids" {
   depends_on = [null_resource.bastion_packages]
-  value      = split("/", ibm_pi_instance.bastion[0].id)[1]
+  value      = ibm_pi_instance.bastion.*.id
 }
 
 output "bastion_network" {

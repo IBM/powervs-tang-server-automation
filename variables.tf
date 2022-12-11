@@ -256,14 +256,6 @@ variable "tang_health_status" {
 }
 
 ################################################################
-### NBDE Server configuration
-################################################################
-# https://github.com/linux-system-roles/nbde_server
-# Prior  : 1.1.5
-# Current: 1.2.0
-variable "nbde_tag" { default = "v1.2.0" }
-
-################################################################
 ### Fips Configuration
 ################################################################
 variable "fips_compliant" {

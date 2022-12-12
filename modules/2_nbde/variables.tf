@@ -202,11 +202,3 @@ variable "ansible_repo_name" {
 variable "tang_health_status" {
   default = "WARNING"
 }
-
-################################################################
-### NBDE Server configuration
-################################################################
-# https://github.com/linux-system-roles/nbde_server
-# Prior  : 1.1.5
-# Current: 1.2.0
-variable "nbde_tag" { default = "v1.2.0" }

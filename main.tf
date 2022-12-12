@@ -126,9 +126,6 @@ module "nbde" {
   connection_timeout  = var.connection_timeout
   ssh_agent           = var.ssh_agent
   private_network_mtu = var.private_network_mtu
-
-  # NBDE tag
-  nbde_tag = var.nbde_tag
 }
 
 locals {

@@ -24,13 +24,13 @@
 variable "ibmcloud_api_key" {
   description = "IBM Cloud API key associated with user's identity"
   default     = "<key>"
-  sensitive = true
+  sensitive   = true
 }
 
 variable "service_instance_id" {
   description = "The cloud instance ID of your account"
   default     = ""
-  sensitive = true
+  sensitive   = true
 }
 
 variable "ibmcloud_region" {
@@ -118,24 +118,24 @@ variable "private_key_file" {
 variable "private_key" {
   description = "content of private ssh key"
   # if empty string will read contents of file at var.private_key_file
-  default = ""
+  default   = ""
   sensitive = true
 }
 
 variable "public_key" {
   description = "Public key"
   # if empty string will read contents of file at var.public_key_file
-  default = ""
+  default   = ""
   sensitive = true
 }
 
 variable "rhel_subscription_username" {
-  default = ""
+  default   = ""
   sensitive = true
 }
 
 variable "rhel_subscription_password" {
-  default = ""
+  default   = ""
   sensitive = true
 }
 
@@ -237,8 +237,8 @@ variable "private_network_mtu" {
 }
 
 variable "rhel_subscription_org" {
-  type    = string
-  default = ""
+  type      = string
+  default   = ""
   sensitive = true
 }
 
@@ -249,8 +249,8 @@ variable "setup_squid_proxy" {
 }
 
 variable "rhel_subscription_activationkey" {
-  type    = string
-  default = "The subscription key for activating rhel"
+  type      = string
+  default   = "The subscription key for activating rhel"
   sensitive = true
 }
 

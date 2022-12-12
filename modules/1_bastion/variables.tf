@@ -21,6 +21,7 @@
 variable "service_instance_id" {
   description = "The cloud instance ID of your account"
   default     = ""
+  sensitive   = true
 }
 
 ################################################################
@@ -82,20 +83,24 @@ variable "ansible_repo_name" {
 }
 
 variable "rhel_subscription_username" {
-  default = ""
+  default   = ""
+  sensitive = true
 }
 
 variable "rhel_subscription_password" {
-  default = ""
+  default   = ""
+  sensitive = true
 }
 variable "rhel_subscription_org" {
-  type    = string
-  default = ""
+  type      = string
+  default   = ""
+  sensitive = true
 }
 
 variable "rhel_subscription_activationkey" {
-  type    = string
-  default = ""
+  type      = string
+  default   = ""
+  sensitive = true
 }
 variable "domain" {}
 variable "rhel_smt" {}
@@ -134,12 +139,14 @@ variable "private_key" {
   type        = string
   description = "private key"
   default     = ""
+  sensitive   = true
 }
 
 variable "public_key" {
   type        = string
   description = "public key"
   default     = ""
+  sensitive   = true
 }
 
 variable "connection_timeout" {

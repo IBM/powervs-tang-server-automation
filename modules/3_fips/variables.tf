@@ -24,11 +24,13 @@
 variable "ibmcloud_api_key" {
   description = "IBM Cloud API key associated with user's identity"
   default     = "<key>"
+  sensitive   = true
 }
 
 variable "service_instance_id" {
   description = "The cloud instance ID of your account"
   default     = ""
+  sensitive   = true
 }
 
 variable "ibmcloud_region" {
@@ -79,8 +81,8 @@ variable "rhel_username" {
 
 variable "private_key" {
   description = "content of private ssh key"
-  # if empty string will read contents of file at var.private_key_file
-  default = ""
+  default     = ""
+  sensitive   = true
 }
 
 variable "connection_timeout" {

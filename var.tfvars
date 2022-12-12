@@ -42,9 +42,6 @@ rhel_smt                   = 4
 
 bastion_health_status = "WARNING"
 tang_health_status    = "WARNING"
-#install_playbook_repo      = "https://github.com/aditijadhav38/nbde_server"
-#install_playbook_tag       = "ef3486b550e93caa6ad77ccb9ab250a2d8686475"
-
 
 # Enables FIPS in the RHEL or CENTOS PVM instance.
 fips_compliant = false

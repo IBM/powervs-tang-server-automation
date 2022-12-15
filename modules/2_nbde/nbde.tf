@@ -144,9 +144,10 @@ ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i inventory powervs-setup.yml 
   --extra-vars private_network_mtu="${var.private_network_mtu}"  \
   --extra-vars domain="${var.domain}"
 
-ansible-galaxy install linux-system-roles.nbde_server,v1.3.0
-# Lock in the system_roles
-ansible-galaxy collection install fedora.linux_system_roles:==1.29.0
+# https://galaxy.ansible.com/linux-system-roles/nbde_server
+ansible-galaxy install linux-system-roles.nbde_server,1.3.0
+# Lock in the system_roles - https://galaxy.ansible.com/fedora/linux_system_roles
+ansible-galaxy collection install fedora.linux_system_roles:==1.33.0
 ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i inventory powervs-tang.yml
 EOF
     ]

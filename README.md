@@ -20,7 +20,7 @@ single [bastion host](https://en.wikipedia.org/wiki/Bastion_host). The tang serv
 
 ## Download the Automation Code
 
-You'll need to use git to clone the deployment code when working off the master branch
+You'll need to use git to clone the deployment code when working off the main branch
 
 ```
 $ git clone https://github.com/ibm/powervs-tang-server-automation

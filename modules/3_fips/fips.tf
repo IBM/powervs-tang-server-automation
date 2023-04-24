@@ -86,6 +86,9 @@ resource "ibm_pi_instance_action" "tang_fips_reboot" {
 resource "null_resource" "bastion_fips_enable" {
   # If the bastion.count is zero, then we're skipping as the bastion
   # already exists
+  depends_on = [
+    null_resource.tang_fips_enable
+  ]
   count = var.bastion_count
 
   connection {
@@ -101,24 +104,9 @@ resource "null_resource" "bastion_fips_enable" {
       <<EOF
 # enable FIPS as required
 sudo fips-mode-setup --enable
+# We considered using ibm_pi_instance_action and opted for an Operating Systems controlled reboot as we know the state when we take this action.
+sudo shutdown -r +1
 EOF
     ]
   }
-}
-
-resource "ibm_pi_instance_action" "bastion_fips_reboot" {
-  # If the bastion.count is zero, then we're skipping as the bastion
-  # already exists
-  count = var.bastion_count
-
-  depends_on = [
-    null_resource.bastion_fips_enable,
-    ibm_pi_instance_action.tang_fips_reboot
-  ]
-
-  pi_cloud_instance_id = var.service_instance_id
-
-  # Example: 99999-AA-5554-333-0e1248fa30c6/10111-b114-4d11-b2224-59999ab
-  pi_instance_id = split("/", var.bastion_instance_ids[count.index])[1]
-  pi_action      = "soft-reboot"
 }

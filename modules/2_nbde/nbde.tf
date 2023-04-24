@@ -8,7 +8,7 @@
 #
 # Licensed Materials - Property of IBM
 #
-# ©Copyright IBM Corp. 2022
+# ©Copyright IBM Corp. 2022, 2023
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -54,10 +54,21 @@ data "ibm_pi_network" "network" {
   pi_cloud_instance_id = var.service_instance_id
 }
 
+# Extract the instance's IP addresses
+# see https://registry.terraform.io/providers/IBM-Cloud/ibm/latest/docs/resources/pi_instance
+locals {
+  tang_hosts = join(",", [for ts in ibm_pi_instance.tang : ts.pi_network[0].ip_address])
+  tang = {
+    volume_count = lookup(var.tang, "data_volume_count", 1),
+    volume_size  = lookup(var.tang, "data_volume_size", 10)
+  }
+}
+
 # Creates the Tang Servers
 resource "ibm_pi_instance" "tang" {
   count = var.tang.count
 
+  depends_on           = [ibm_pi_volume.tang]
   pi_memory            = var.tang["memory"]
   pi_processors        = var.tang["processors"]
   pi_instance_name     = "${var.name_prefix}-tang-${count.index}"
@@ -67,18 +78,20 @@ resource "ibm_pi_instance" "tang" {
   pi_sys_type          = var.system_type
   pi_cloud_instance_id = var.service_instance_id
   pi_health_status     = var.tang_health_status
-
-  pi_storage_pool = local.tang_storage_pool
+  pi_volume_ids        = local.tang.volume_count == 0 ? null : [for ix in range(local.tang.volume_count) : ibm_pi_volume.tang.*.volume_id[(count.index * local.tang.volume_count) + ix]]
+  pi_storage_pool      = local.tang_storage_pool
 
   pi_network {
     network_id = data.ibm_pi_network.network.id
   }
 }
 
-# Extract the instance's IP addresses
-# see https://registry.terraform.io/providers/IBM-Cloud/ibm/latest/docs/resources/pi_instance
-locals {
-  tang_hosts = join(",", [for ts in ibm_pi_instance.tang : ts.pi_network[0].ip_address])
+resource "ibm_pi_volume" "tang" {
+  count                = local.tang.volume_count * var.tang["count"]
+  pi_volume_name       = "${var.cluster_id}-tang-${count.index}-volume"
+  pi_volume_size       = local.tang.volume_size
+  pi_volume_pool       = local.tang_storage_pool
+  pi_cloud_instance_id = var.service_instance_id
 }
 
 resource "null_resource" "tang_install" {
@@ -117,6 +130,11 @@ resource "null_resource" "tang_install" {
   }
 
   provisioner "file" {
+    source      = "${path.cwd}/modules/2_nbde/files/volume-mount.yml"
+    destination = "volume-mount.yml"
+  }
+
+  provisioner "file" {
     source      = "${path.cwd}/modules/2_nbde/files/powervs-remove-subscription.yml"
     destination = "powervs-remove-subscription.yml"
   }
@@ -129,8 +147,16 @@ resource "null_resource" "tang_install" {
 echo "Hosts: ${local.tang_hosts}"
 echo "[vmhost],${local.tang_hosts}" | tr "," "\n\t" > inventory
 
+cat << EOT > ansible.cfg
+[defaults]
+retry_files_enabled = False
+pipelining          = True
+host_key_checking   = False
+log_path            = /root/tang-setup-logs.txt
+EOT
+
 echo 'Running tang setup playbook...'
-ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i inventory powervs-setup.yml --extra-vars username="${var.rhel_subscription_username}"\
+ANSIBLE_CONFIG=ansible.cfg ansible-playbook -i inventory powervs-setup.yml --extra-vars username="${var.rhel_subscription_username}"\
   --extra-vars password="${var.rhel_subscription_password}"\
   --extra-vars bastion_ip="$(ip -4 -json addr show dev env3  | jq -r '.[].addr_info[].local')" \
   --extra-vars rhel_subscription_org="${var.rhel_subscription_org}" \
@@ -144,11 +170,31 @@ ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i inventory powervs-setup.yml 
   --extra-vars private_network_mtu="${var.private_network_mtu}"  \
   --extra-vars domain="${var.domain}"
 
+cat << EOT > ansible.cfg
+[defaults]
+retry_files_enabled = False
+pipelining          = True
+host_key_checking   = False
+log_path            = /root/tang-volume-mount-logs.txt
+EOT
+
+ansible-galaxy collection install community.general:6.5.0 ansible.posix:1.5.1
+ANSIBLE_CONFIG=ansible.cfg ansible-playbook -i inventory volume-mount.yml
+
+cat << EOT > ansible.cfg
+[defaults]
+retry_files_enabled = False
+pipelining          = True
+host_key_checking   = False
+log_path            = /root/tang-server-logs.txt
+EOT
+
+
 # https://galaxy.ansible.com/linux-system-roles/nbde_server
-ansible-galaxy install linux-system-roles.nbde_server,1.3.0
+ansible-galaxy install linux-system-roles.nbde_server,1.3.4
 # Lock in the system_roles - https://galaxy.ansible.com/fedora/linux_system_roles
-ansible-galaxy collection install fedora.linux_system_roles:==1.33.0
-ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i inventory powervs-tang.yml
+ansible-galaxy collection install fedora.linux_system_roles:==1.36.0
+ANSIBLE_CONFIG=ansible.cfg ansible-playbook -i inventory powervs-tang.yml
 EOF
     ]
   }
@@ -159,7 +205,14 @@ EOF
     on_failure = continue
     inline = [
       <<EOF
-ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i inventory powervs-remove-subscription.yml
+cat << EOT > ansible.cfg
+[defaults]
+retry_files_enabled = False
+pipelining          = True
+host_key_checking   = False
+log_path            = /root/tang-remove-subscription-logs.txt
+EOT
+ANSIBLE_CONFIG=ansible.cfg ansible-playbook -i inventory powervs-remove-subscription.yml
 EOF
     ]
   }

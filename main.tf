@@ -84,7 +84,7 @@ locals {
   bastion_ip      = module.bastion[0].bastion_ip
 
   # Bastion Public IP is either from the vars file or from the prior module
-  bastion_public_ip    = var.private_key == "" ? module.bastion[0].bastion_public_ip : var.bastion_public_ip
+  bastion_public_ip    = var.bastion_public_ip == "" ? module.bastion[0].bastion_public_ip : var.bastion_public_ip
   bastion_instance_ids = module.bastion[0].bastion_instance_ids
 }
 
@@ -126,6 +126,8 @@ module "nbde" {
   connection_timeout  = var.connection_timeout
   ssh_agent           = var.ssh_agent
   private_network_mtu = var.private_network_mtu
+  cluster_id_prefix   = var.cluster_id_prefix
+  cluster_id          = var.cluster_id == "" ? random_id.label[0].hex : (var.cluster_id_prefix == "" ? var.cluster_id : "${var.cluster_id_prefix}-${var.cluster_id}")
 }
 
 locals {

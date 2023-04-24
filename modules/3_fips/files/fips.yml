@@ -7,3 +7,9 @@
       become_user: root
       shell: |
         fips-mode-setup --enable
+    - name: Reboot the tang servers
+      become_user: root
+      ansible.builtin.reboot:
+        reboot_timeout: 3000
+        pre_reboot_delay: 1000
+        post_reboot_delay: 2000

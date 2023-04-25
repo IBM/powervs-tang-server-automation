@@ -24,13 +24,11 @@
 variable "ibmcloud_api_key" {
   description = "IBM Cloud API key associated with user's identity"
   default     = "<key>"
-  sensitive   = true
 }
 
 variable "service_instance_id" {
   description = "The cloud instance ID of your account"
   default     = ""
-  sensitive   = true
 }
 
 variable "ibmcloud_region" {
@@ -69,13 +67,19 @@ variable "bastion_public_ip" {
 variable "tang" {
   # only three nodes are supported
   default = {
-    count      = 3
-    memory     = "16"
-    processors = "1"
+    count             = 3
+    memory            = "16"
+    processors        = "1"
+    data_volume_size  = 10 # Default volume size (in GB) to be attached to the tang server nodes.
+    data_volume_count = 1  # Number of volumes to be attached to each tang server node.
   }
   validation {
     condition     = lookup(var.tang, "count", 3) == 3
     error_message = "The tang.count value must be 3."
+  }
+  validation {
+    condition     = lookup(var.tang, "data_volume_count", 1) == 1
+    error_message = "The tang.data_volume_count must be 1."
   }
 }
 
@@ -118,30 +122,26 @@ variable "private_key_file" {
 variable "private_key" {
   description = "content of private ssh key"
   # if empty string will read contents of file at var.private_key_file
-  default   = ""
-  sensitive = true
+  default = ""
 }
 
 variable "public_key" {
   description = "Public key"
   # if empty string will read contents of file at var.public_key_file
-  default   = ""
-  sensitive = true
+  default = ""
 }
 
 variable "rhel_subscription_username" {
-  default   = ""
-  sensitive = true
+  default = ""
 }
 
 variable "rhel_subscription_password" {
-  default   = ""
-  sensitive = true
+  default = ""
 }
 
 variable "rhel_smt" {
-  description = "SMT value to set on the bastion node. Eg: on,off,2,4,8"
-  default     = 4
+  description = "SMT value to set on the node. Eg: on,off,2,4,8"
+  default     = 8
 }
 
 ################################################################
@@ -237,9 +237,8 @@ variable "private_network_mtu" {
 }
 
 variable "rhel_subscription_org" {
-  type      = string
-  default   = ""
-  sensitive = true
+  type    = string
+  default = ""
 }
 
 variable "setup_squid_proxy" {
@@ -249,9 +248,8 @@ variable "setup_squid_proxy" {
 }
 
 variable "rhel_subscription_activationkey" {
-  type      = string
-  default   = "The subscription key for activating rhel"
-  sensitive = true
+  type    = string
+  default = "The subscription key for activating rhel"
 }
 
 variable "ansible_repo_name" {
@@ -262,6 +260,8 @@ variable "ansible_repo_name" {
 variable "tang_health_status" {
   default = "WARNING"
 }
+
+variable "cluster_id_prefix" {}
 
 ################################################################
 ### Fips Configuration

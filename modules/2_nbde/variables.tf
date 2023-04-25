@@ -21,7 +21,6 @@
 variable "service_instance_id" {
   description = "The cloud instance ID of your account"
   default     = ""
-  sensitive   = true
 }
 
 # From the Bastion Setup
@@ -34,13 +33,19 @@ variable "bastion_public_ip" { type = string }
 variable "tang" {
   # only three nodes are supported
   default = {
-    count      = 3
-    memory     = "16"
-    processors = "1"
+    count             = 3
+    memory            = "16"
+    processors        = "1"
+    data_volume_size  = 10 #Default volume size (in GB) to be attached to the tang server nodes.
+    data_volume_count = 1  #Number of volumes to be attached to each tang server node.
   }
   validation {
     condition     = lookup(var.tang, "count", 3) == 3
     error_message = "The tang.count value must be 3."
+  }
+  validation {
+    condition     = lookup(var.tang, "data_volume_count", 1) == 1
+    error_message = "The tang.data_volume_count must be 1."
   }
 }
 
@@ -95,13 +100,11 @@ variable "public_key" {
 }
 
 variable "rhel_subscription_username" {
-  default   = ""
-  sensitive = true
+  default = ""
 }
 
 variable "rhel_subscription_password" {
-  default   = ""
-  sensitive = true
+  default = ""
 }
 
 variable "rhel_smt" {
@@ -183,10 +186,14 @@ variable "private_network_mtu" {
   default     = 1450
 }
 
+variable "ipv4_dns" {
+  description = "DNS value for the ipv4 on RHEL and RHCOS nodes"
+  default     = "8.8.8.8 8.8.4.4"
+}
+
 variable "rhel_subscription_org" {
-  type      = string
-  default   = ""
-  sensitive = true
+  type    = string
+  default = ""
 }
 
 variable "setup_squid_proxy" {
@@ -196,9 +203,8 @@ variable "setup_squid_proxy" {
 }
 
 variable "rhel_subscription_activationkey" {
-  type      = string
-  default   = ""
-  sensitive = true
+  type    = string
+  default = ""
 }
 
 
@@ -209,3 +215,5 @@ variable "ansible_repo_name" {
 variable "tang_health_status" {
   default = "WARNING"
 }
+
+variable "cluster_id_prefix" {}

@@ -18,7 +18,7 @@ name_prefix = "infra-node4"
 ### Example 1.5 processors == 1.5 physical core entitlements == ceil[1.5] = 2 vCPU == 16 logical OS CPUs (SMT=8)
 ### Example 2 processors == 2 physical core entitlements == ceil[2] = 2 vCPU == 16 logical OS CPUs (SMT=8)
 bastion = { memory = "16", processors = "1", "count" = 1 }
-tang    = { memory = "16", processors = "1", "count" = 3 }
+tang    = { memory = "16", processors = "1", "count" = 3, data_volume_count = 1, data_volume_size = 10 }
 
 public_key = "****"
 

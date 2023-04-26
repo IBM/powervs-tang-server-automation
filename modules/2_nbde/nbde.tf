@@ -168,7 +168,8 @@ ANSIBLE_CONFIG=ansible.cfg ansible-playbook -i inventory powervs-setup.yml --ext
   --extra-vars proxy_port="${local.proxy.port}" \
   --extra-vars no_proxy="${local.proxy.no_proxy}" \
   --extra-vars private_network_mtu="${var.private_network_mtu}"  \
-  --extra-vars domain="${var.domain}"
+  --extra-vars domain="${var.domain}" \
+  --extra-vars ipv4_dns="${var.ipv4_dns}"
 
 cat << EOT > ansible.cfg
 [defaults]

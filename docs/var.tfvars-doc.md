@@ -26,7 +26,7 @@ key - https://cloud.ibm.com/docs/account?topic=account-userapikey
 
 In order to retrieve the PowerVS region, zone and instance specific details please use the IBM Cloud CLI.
 
-1. Run `ibmcloud pi service-list`. It will list the service instance names with IDs.
+1. Run `ibmcloud pi workspace list`. It will list the service instance names with IDs.
 2. The ID will be of the form
    ```
    crn:v1:bluemix:public:power-iaas:eu-de-1:a/65b64c1f1c29460e8c2e4bbfbd893c2c:360a5df8-3f00-44b2-bd9f-d9a51fe53de6::

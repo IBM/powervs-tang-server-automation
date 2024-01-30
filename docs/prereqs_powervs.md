@@ -63,13 +63,13 @@ connection.
   You’ll need the CRN of the service instance created earlier (for example, ocp-powervs-test-1).
 
 ```
-ibmcloud pi service-target crn:v1:bluemix:public:power-iaas:tok04:a/65b64c1f1c29460e8c2e4bbfbd893c2c:e4bb3d9d-a37c-4b1f-a923-4537c0c8beb3::
+ibmcloud pi workspace target crn:v1:bluemix:public:power-iaas:tok04:a/65b64c1f1c29460e8c2e4bbfbd893c2c:e4bb3d9d-a37c-4b1f-a923-4537c0c8beb3::
 ```
 
 - Get the ID of the private network
 
 ```
-ibmcloud pi nets | grep -w ocp-net
+ibmcloud pi network ls | grep -w ocp-net
 
 
 ID           93cc386a-53c5-4aef-9882-4294025c5e1f

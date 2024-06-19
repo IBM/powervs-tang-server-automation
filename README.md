@@ -44,7 +44,7 @@ rhel_subscription_username  = "user@test.com"
 rhel_subscription_password  = "mypassword"
 ```
 
-Note: rhel_image_name should reference a PowerVS image for Red Hat Enterprise Linux 8.6 or 9.0 or Centos 8.6. 
+Note: rhel_image_name should reference a PowerVS image for Red Hat Enterprise Linux 9.0 or Centos 9.0. 
 
 ## Start Install
 
@@ -52,7 +52,7 @@ Run the following commands from within the directory.
 
 ```
 $ terraform init
-$ terraform plan --var-file=var.tfvars
+$ terraform plan -var-file=var.tfvars
 $ terraform apply -var-file=var.tfvars
 ```
 

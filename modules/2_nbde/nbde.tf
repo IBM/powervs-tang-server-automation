@@ -179,7 +179,7 @@ host_key_checking   = False
 log_path            = /root/tang-volume-mount-logs.txt
 EOT
 
-ansible-galaxy collection install community.general:6.5.0 ansible.posix:1.5.1
+ansible-galaxy collection install community.general:10.3.0 ansible.posix:2.0.0
 ANSIBLE_CONFIG=ansible.cfg ansible-playbook -i inventory volume-mount.yml
 
 cat << EOT > ansible.cfg
@@ -192,9 +192,9 @@ EOT
 
 
 # See https://github.com/linux-system-roles/nbde_server/releases/
-ansible-galaxy install linux-system-roles.nbde_server,1.4.6
+ansible-galaxy install linux-system-roles.nbde_server,1.4.9
 # Lock in the system_roles - https://galaxy.ansible.com/fedora/linux_system_roles
-ansible-galaxy collection install fedora.linux_system_roles:==1.82.0
+ansible-galaxy collection install fedora.linux_system_roles:==1.94.2
 ANSIBLE_CONFIG=ansible.cfg ansible-playbook -i inventory powervs-tang.yml
 EOF
     ]

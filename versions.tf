@@ -30,7 +30,7 @@ terraform {
     }
     null = {
       source  = "hashicorp/null"
-      version = "3.3.0"
+      version = "3.3.1"
     }
   }
   required_version = ">= 1.2.0"
